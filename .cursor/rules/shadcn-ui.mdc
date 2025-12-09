@@ -1,0 +1,26 @@
+---
+description: shadcn-ui component usage standards - always use CLI to add official components
+globs: ["src/components/**/*", "src/app/**/*"]
+alwaysApply: true
+---
+
+# shadcn-ui Components
+
+When a new UI component is needed:
+
+1. **Check if shadcn-ui has it**: Before implementing any UI component manually, first check if it's available in the official shadcn-ui component library (https://ui.shadcn.com/docs/components)
+
+2. **Use the CLI to add components**: If the component exists in shadcn-ui, ALWAYS use the shadcn-ui CLI to add it:
+   ```bash
+   npx shadcn@latest add <component-name>
+   ```
+   
+3. **Never manually implement official components**: Do not manually create or implement components that are available in the official shadcn-ui library. The CLI ensures proper installation with correct dependencies and configurations.
+
+4. **Examples of available components**:
+   - accordion, alert, alert-dialog, aspect-ratio, avatar, badge, breadcrumb, button, calendar, card, carousel, checkbox, collapsible, command, context-menu, dialog, drawer, dropdown-menu, form, hover-card, input, label, menubar, navigation-menu, pagination, popover, progress, radio-group, resizable, scroll-area, select, separator, sheet, skeleton, slider, sonner, switch, table, tabs, textarea, toast, toggle, toggle-group, tooltip, and more.
+
+5. **Custom components**: Only implement custom UI components when:
+   - The component doesn't exist in shadcn-ui
+   - You need to extend or compose existing shadcn-ui components
+   - You need project-specific business logic components
