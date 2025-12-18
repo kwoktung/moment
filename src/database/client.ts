@@ -1,11 +1,5 @@
 import { drizzle } from "drizzle-orm/d1";
-import {
-  userTable,
-  accountTable,
-  sessionTable,
-  verificationTokenTable,
-  bookTable,
-} from "./schema";
+import { userTable, attachmentTable, postTable } from "./schema";
 import { Logger } from "drizzle-orm/logger";
 import { getLogger } from "@/lib/logger";
 
@@ -36,17 +30,15 @@ export interface DatabaseBindings {
   DB: D1Database;
 }
 
-export function createDatabaseClient(env: CloudflareEnv) {
+export function getDatabase(env: CloudflareEnv) {
   return drizzle(env.DB, {
     schema: {
       userTable,
-      accountTable,
-      sessionTable,
-      verificationTokenTable,
-      bookTable,
+      attachmentTable,
+      postTable,
     },
     logger: new DrizzleLogger(env),
   });
 }
 
-export type DatabaseClient = ReturnType<typeof createDatabaseClient>;
+export type DatabaseClient = ReturnType<typeof getDatabase>;

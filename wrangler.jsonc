@@ -18,15 +18,15 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "NextJS-Hono-Cloudflare",
+      "database_name": "journal-project",
       "database_id": "17ea1884-a7c1-4019-b03c-7eabedebe0fa",
       "migrations_dir": "./src/database/migrations",
     },
   ],
-  "kv_namespaces": [
+  "r2_buckets": [
     {
-      "binding": "KV",
-      "id": "afabdd3b7ccd469c8ae146cfe6a1717a",
+      "binding": "R2",
+      "bucket_name": "journal-project",
     },
   ],
   /**

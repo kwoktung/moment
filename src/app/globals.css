@@ -120,3 +120,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Emoji Picker Scrolling Styles */
+.emoji-picker-wrapper .epr-emoji-category-label {
+  scroll-margin-top: 8px;
+}
+
+/* Smooth scrolling for scrollable containers with hidden scrollbars */
+.emoji-picker-wrapper .epr-emoji-list,
+.emoji-picker-wrapper .epr-body,
+.emoji-picker-wrapper .epr-scroll-wrapper {
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for Webkit browsers (Chrome, Safari, etc.) */
+.emoji-picker-wrapper .epr-emoji-list::-webkit-scrollbar,
+.emoji-picker-wrapper .epr-body::-webkit-scrollbar,
+.emoji-picker-wrapper .epr-scroll-wrapper::-webkit-scrollbar {
+  display: none;
+}

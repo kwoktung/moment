@@ -1,4 +1,4 @@
-import { createDatabaseClient, type DatabaseClient } from "@/database/client";
+import { getDatabase, type DatabaseClient } from "@/database/client";
 import { getLogger } from "./logger";
 
 type Logger = ReturnType<typeof getLogger>;
@@ -14,7 +14,7 @@ export const createContext = (env: CloudflareEnv): Context => {
   return {
     env,
     logger: getLogger(env),
-    db: createDatabaseClient(env),
+    db: getDatabase(env),
     kv: env.KV,
   };
 };

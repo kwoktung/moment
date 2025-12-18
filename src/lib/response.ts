@@ -8,29 +8,37 @@ export const responseSchema = z.object({
   data: z.unknown(),
   success: z.boolean(),
   message: z.string().optional(),
-  timestamp: z.string().optional(),
 });
+
+// Pagination schema for meta information
+export const PaginationSchema = z.object({
+  page: z.number().int().positive().optional(),
+  pageSize: z.number().int().positive().optional(),
+  total: z.number().int().nonnegative(),
+  totalPages: z.number().int().nonnegative().optional(),
+});
+
+// Generic success response wrapper
+export const createSuccessResponse = <T extends z.ZodType>(dataSchema: T) => {
+  return z.object({
+    success: z.literal(true),
+    data: dataSchema,
+  });
+};
+
+// Paginated response wrapper
+export const createPaginatedResponse = <T extends z.ZodType>(dataSchema: T) => {
+  return z.object({
+    success: z.literal(true),
+    data: z.array(dataSchema),
+    pagination: PaginationSchema,
+  });
+};
 
 // Response options interface
 export interface ResponseOptions {
   message?: string;
   status?: ContentfulStatusCode;
-  timestamp?: boolean;
-}
-
-// Error response options
-export interface ErrorResponseOptions {
-  message?: string;
-  status?: ContentfulStatusCode;
-  errorCode?: string;
-  details?: string;
-}
-
-// Extended response type for errors with additional fields
-export interface ErrorResponseType extends HttpResponseType<null> {
-  errorCode?: string;
-  details?: string;
-  timestamp?: string;
 }
 
 export class HttpResponse {
@@ -38,16 +46,14 @@ export class HttpResponse {
    * Create a successful response
    */
   static success<T>(ctx: Context, data: T, options: ResponseOptions = {}) {
-    const { message = "Success", timestamp = true } = options;
+    const { status = 200 as ContentfulStatusCode } = options;
 
-    const response: HttpResponseType<T> = {
+    const response = {
+      success: true as const,
       data,
-      success: true,
-      message,
-      ...(timestamp && { timestamp: new Date().toISOString() }),
     };
 
-    return ctx.json(response, 200);
+    return ctx.json(response, status);
   }
 
   /**
@@ -58,37 +64,31 @@ export class HttpResponse {
     data: PaginationType<T>,
     options: ResponseOptions = {},
   ) {
-    const { message = "Data retrieved successfully", timestamp = true } =
-      options;
+    const { status = 200 } = options;
+    const total = data.total;
+    const items = data.items;
 
-    const response: HttpResponseType<PaginationType<T>> = {
-      data,
-      success: true,
-      message,
-      ...(timestamp && { timestamp: new Date().toISOString() }),
+    const response = {
+      success: true as const,
+      data: items,
+      pagination: {
+        total,
+      },
     };
 
-    return ctx.json(response, 200);
+    return ctx.json(response, status);
   }
 
   /**
    * Create an error response
    */
-  static error(ctx: Context, options: ErrorResponseOptions = {}) {
-    const {
-      message = "An error occurred",
-      status = 500,
-      errorCode,
-      details,
-    } = options;
+  static error(ctx: Context, options: ResponseOptions = {}) {
+    const { message = "An error occurred", status = 500 } = options;
 
-    const response: ErrorResponseType = {
+    const response: HttpResponseType<null> = {
       data: null,
       success: false,
       message,
-      timestamp: new Date().toISOString(),
-      ...(errorCode && { errorCode }),
-      ...(details && { details }),
     };
 
     return ctx.json(response, status);
@@ -101,19 +101,16 @@ export class HttpResponse {
     return this.error(ctx, {
       message: message || "Resource not found",
       status: 404,
-      errorCode: "NOT_FOUND",
     });
   }
 
   /**
    * Create a bad request response
    */
-  static badRequest(ctx: Context, message?: string, details?: string) {
+  static badRequest(ctx: Context, message?: string) {
     return this.error(ctx, {
       message: message || "Bad request",
       status: 400,
-      errorCode: "BAD_REQUEST",
-      details,
     });
   }
 
@@ -124,7 +121,6 @@ export class HttpResponse {
     return this.error(ctx, {
       message: message || "Unauthorized",
       status: 401,
-      errorCode: "UNAUTHORIZED",
     });
   }
 
@@ -135,31 +131,26 @@ export class HttpResponse {
     return this.error(ctx, {
       message: message || "Forbidden",
       status: 403,
-      errorCode: "FORBIDDEN",
     });
   }
 
   /**
    * Create a conflict response
    */
-  static conflict(ctx: Context, message?: string, details?: string) {
+  static conflict(ctx: Context, message?: string) {
     return this.error(ctx, {
       message: message || "Conflict",
       status: 409,
-      errorCode: "CONFLICT",
-      details,
     });
   }
 
   /**
    * Create a validation error response
    */
-  static validationError(ctx: Context, message?: string, details?: string) {
+  static validationError(ctx: Context, message?: string) {
     return this.error(ctx, {
       message: message || "Validation failed",
       status: 422,
-      errorCode: "VALIDATION_ERROR",
-      details,
     });
   }
 

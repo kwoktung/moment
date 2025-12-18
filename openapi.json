@@ -1,0 +1,566 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Journal API", "version": "1.0.0" },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer token authentication for admin endpoints"
+      }
+    },
+    "schemas": {},
+    "parameters": {}
+  },
+  "paths": {
+    "/api/auth/sign-in": {
+      "post": {
+        "tags": ["auth"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "login": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Email or username",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "User password",
+                    "example": "password123"
+                  }
+                },
+                "required": ["login", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "number" },
+                        "email": { "type": "string" },
+                        "username": { "type": "string" },
+                        "name": { "type": ["string", "null"] },
+                        "avatar": { "type": ["string", "null"] }
+                      },
+                      "required": ["id", "email", "username", "name", "avatar"]
+                    }
+                  },
+                  "required": ["user"]
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request - Invalid data" },
+          "401": { "description": "Unauthorized - Invalid credentials" }
+        }
+      }
+    },
+    "/api/auth/sign-up": {
+      "post": {
+        "tags": ["auth"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "User email",
+                    "example": "user@example.com"
+                  },
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username",
+                    "example": "johndoe"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "User password",
+                    "example": "password123"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "User full name",
+                    "example": "John Doe"
+                  }
+                },
+                "required": ["email", "username", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "number" },
+                        "email": { "type": "string" },
+                        "username": { "type": "string" },
+                        "name": { "type": ["string", "null"] },
+                        "avatar": { "type": ["string", "null"] }
+                      },
+                      "required": ["id", "email", "username", "name", "avatar"]
+                    }
+                  },
+                  "required": ["user"]
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request - Invalid data" },
+          "409": {
+            "description": "Conflict - Email or username already exists"
+          }
+        }
+      }
+    },
+    "/api/auth/sign-out": {
+      "post": {
+        "tags": ["auth"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "success": { "type": "boolean" } },
+                  "required": ["success"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/session": {
+      "get": {
+        "tags": ["auth"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": ["object", "null"],
+                      "properties": {
+                        "id": { "type": "number" },
+                        "email": { "type": "string" },
+                        "username": { "type": "string" },
+                        "name": { "type": ["string", "null"] },
+                        "avatar": { "type": ["string", "null"] }
+                      },
+                      "required": ["id", "email", "username", "name", "avatar"]
+                    }
+                  },
+                  "required": ["user"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/account": {
+      "delete": {
+        "tags": ["auth"],
+        "responses": {
+          "200": {
+            "description": "Success - Account deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "success": { "type": "boolean" } },
+                  "required": ["success"]
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized - Not logged in" }
+        }
+      }
+    },
+    "/api/posts": {
+      "post": {
+        "tags": ["post"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Post text content",
+                    "example": "This is my post content"
+                  },
+                  "attachments": {
+                    "type": "array",
+                    "items": { "type": "integer", "exclusiveMinimum": 0 },
+                    "default": [],
+                    "description": "Array of upload tracking IDs to attach to the post",
+                    "example": [1, 2, 3]
+                  }
+                },
+                "required": ["text"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Post created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "number" },
+                    "text": { "type": "string" },
+                    "createdBy": { "type": "number" },
+                    "user": {
+                      "type": ["object", "null"],
+                      "properties": {
+                        "id": { "type": "number" },
+                        "username": { "type": "string" },
+                        "name": { "type": ["string", "null"] },
+                        "avatar": { "type": ["string", "null"] }
+                      },
+                      "required": ["id", "username", "name", "avatar"]
+                    },
+                    "createdAt": { "type": "string" },
+                    "updatedAt": { "type": ["string", "null"] },
+                    "attachments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "number" },
+                          "filename": { "type": "string" },
+                          "createdAt": { "type": "string" }
+                        },
+                        "required": ["id", "filename", "createdAt"]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "text",
+                    "createdBy",
+                    "user",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request - Invalid input" },
+          "401": { "description": "Unauthorized - Authentication required" },
+          "404": {
+            "description": "Not found - One or more attachment IDs not found"
+          },
+          "500": {
+            "description": "Internal server error - Failed to create post"
+          }
+        }
+      },
+      "get": {
+        "tags": ["post"],
+        "responses": {
+          "200": {
+            "description": "Posts retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "posts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "number" },
+                          "text": { "type": "string" },
+                          "createdBy": { "type": "number" },
+                          "user": {
+                            "type": ["object", "null"],
+                            "properties": {
+                              "id": { "type": "number" },
+                              "username": { "type": "string" },
+                              "name": { "type": ["string", "null"] },
+                              "avatar": { "type": ["string", "null"] }
+                            },
+                            "required": ["id", "username", "name", "avatar"]
+                          },
+                          "createdAt": { "type": "string" },
+                          "updatedAt": { "type": ["string", "null"] },
+                          "attachments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "uri": {
+                                  "type": "string",
+                                  "description": "URI to access the attachment",
+                                  "example": "/api/attachment/1234567890-uuid.jpg"
+                                }
+                              },
+                              "required": ["uri"]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "text",
+                          "createdBy",
+                          "user",
+                          "createdAt",
+                          "updatedAt",
+                          "attachments"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["posts"]
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized - Authentication required" },
+          "500": {
+            "description": "Internal server error - Failed to retrieve posts"
+          }
+        }
+      }
+    },
+    "/api/posts/{id}": {
+      "delete": {
+        "tags": ["post"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Post ID to delete",
+              "example": "1"
+            },
+            "required": true,
+            "description": "Post ID to delete",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Post deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Success message",
+                      "example": "Post deleted successfully"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized - Authentication required" },
+          "403": { "description": "Forbidden - Post does not belong to user" },
+          "404": { "description": "Not found - Post not found" },
+          "500": {
+            "description": "Internal server error - Failed to delete post"
+          }
+        }
+      }
+    },
+    "/api/attachment": {
+      "post": {
+        "tags": ["attachment"],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "object",
+                    "description": "The file to upload as an attachment"
+                  }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Attachment created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "enum": [true] },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "number" },
+                        "filename": { "type": "string" }
+                      },
+                      "required": ["id", "filename"]
+                    }
+                  },
+                  "required": ["success", "data"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid file or missing file"
+          },
+          "401": { "description": "Unauthorized - Authentication required" },
+          "500": {
+            "description": "Internal server error - Failed to create attachment"
+          }
+        }
+      }
+    },
+    "/api/admin/cleanup-attachments": {
+      "post": {
+        "tags": ["admin"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Cleanup completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "enum": [true] },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "deletedCount": { "type": "number" },
+                        "deletedFilenames": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        }
+                      },
+                      "required": ["deletedCount", "deletedFilenames"]
+                    }
+                  },
+                  "required": ["success", "data"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing bearer token"
+          },
+          "500": {
+            "description": "Internal server error - Failed to cleanup attachments"
+          }
+        }
+      }
+    },
+    "/api/user/avatar": {
+      "patch": {
+        "tags": ["user"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "avatar": {
+                    "anyOf": [
+                      { "type": "string", "minLength": 1 },
+                      { "type": "null" },
+                      { "type": "null" }
+                    ],
+                    "description": "Avatar URL or filename. Set to null to clear avatar.",
+                    "example": "https://example.com/avatar.jpg"
+                  }
+                },
+                "required": ["avatar"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Avatar updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "number" },
+                        "email": { "type": "string" },
+                        "username": { "type": "string" },
+                        "name": { "type": ["string", "null"] },
+                        "avatar": { "type": ["string", "null"] }
+                      },
+                      "required": ["id", "email", "username", "name", "avatar"]
+                    }
+                  },
+                  "required": ["user"]
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request - Invalid input" },
+          "401": { "description": "Unauthorized - Authentication required" },
+          "500": {
+            "description": "Internal server error - Failed to update avatar"
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

@@ -7,6 +7,4 @@ export type HttpResponseType<T> = {
   data: T;
   success: boolean;
   message?: string;
-  timestamp?: string;
-  details?: string;
 };
