@@ -64,6 +64,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 This project is designed to be deployed on Cloudflare Pages with Workers integration.
 
 To learn more about deploying Next.js on Cloudflare:
+
 - [Cloudflare Pages Documentation](https://developers.cloudflare.com/pages/)
 - [Next.js on Cloudflare](https://developers.cloudflare.com/pages/framework-guides/nextjs/)
 
