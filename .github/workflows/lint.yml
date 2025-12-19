@@ -27,5 +27,8 @@ jobs:
       - name: Run type check and lint
         run: yarn lint
 
+      - name: Run tests
+        run: yarn test
+
       - name: Check code formatting
         run: yarn prettier --check .

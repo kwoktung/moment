@@ -9,15 +9,7 @@ import { apiClient } from "@/lib/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PostCreationForm } from "./post-creation-form";
 import { PostsFeed } from "./posts-feed";
-
-interface Post {
-  id: number;
-  text: string;
-  createdBy: number;
-  createdAt: string;
-  updatedAt: string | null;
-  attachments: Array<{ uri: string }>;
-}
+import { Post } from "./types";
 
 const Dashboard = () => {
   const [posts, setPosts] = useState<Post[]>([]);

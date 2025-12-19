@@ -19,7 +19,7 @@
     {
       "binding": "DB",
       "database_name": "journal-project",
-      "database_id": "17ea1884-a7c1-4019-b03c-7eabedebe0fa",
+      "database_id": "400e1ca0-0eef-4806-bda2-cc95484f9555",
       "migrations_dir": "./src/database/migrations",
     },
   ],
