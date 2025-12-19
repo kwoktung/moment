@@ -227,7 +227,7 @@ postApp.openapi(queryPosts, async (c) => {
       createdAt: post.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: post.updatedAt?.toISOString() || null,
       attachments: (attachmentsByPostId[post.id] || []).map((att) => ({
-        uri: `/api/attachment/${att.filename}`,
+        uri: `/attachment/${att.filename}`,
       })),
     }));
 

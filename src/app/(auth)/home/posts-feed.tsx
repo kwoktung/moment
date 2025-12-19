@@ -98,28 +98,22 @@ export const PostsFeed = ({
                     <div className="mt-3 space-y-2">
                       <div className="grid grid-cols-2 gap-2">
                         {post.attachments.map((attachment, idx) => {
-                          const filename = attachment.uri.replace(
-                            "/api/attachment/",
-                            "",
-                          );
+                          const filename = attachment.uri.split("/").pop();
                           const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(
-                            filename,
+                            filename || "",
                           );
-                          const attachmentUrl = attachment.uri.startsWith("/")
-                            ? attachment.uri
-                            : `/api/attachment/${filename}`;
 
                           return (
                             <div key={idx} className="relative group">
                               {isImage ? (
                                 <a
-                                  href={attachmentUrl}
+                                  href={attachment.uri}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="block rounded-lg overflow-hidden border hover:opacity-90 transition-opacity relative aspect-video"
                                 >
                                   <Image
-                                    src={attachmentUrl}
+                                    src={attachment.uri}
                                     alt={`Attachment ${idx + 1}`}
                                     fill
                                     className="object-cover"
@@ -128,7 +122,7 @@ export const PostsFeed = ({
                                 </a>
                               ) : (
                                 <a
-                                  href={attachmentUrl}
+                                  href={attachment.uri}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center gap-2 p-3 rounded-lg border hover:bg-accent transition-colors"

@@ -33,7 +33,6 @@ export async function verifyJWT(
     const secretKey = encoder.encode(secret);
 
     const { payload } = await jwtVerify(token, secretKey);
-    console.log(payload);
     return payload as unknown as JWTPayload;
   } catch {
     return null;
