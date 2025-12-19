@@ -1,4 +1,16 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Journal Project
+
+A tutorial/demo project for learning and exploring the **Cloudflare stack** with Next.js.
+
+## About This Project
+
+This project serves as a hands-on demonstration of integrating various Cloudflare services into a Next.js application. It's designed for developers who want to learn how to leverage Cloudflare's platform for building modern web applications.
+
+### Cloudflare Services Used
+
+- **D1** - Cloudflare's serverless SQL database
+- **R2** - Object storage compatible with S3
+- **Turnstile** - Bot protection and CAPTCHA alternative
 
 ## Getting Started
 
@@ -47,8 +59,16 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deploy on Cloudflare
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This project is designed to be deployed on Cloudflare Pages with Workers integration.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+To learn more about deploying Next.js on Cloudflare:
+- [Cloudflare Pages Documentation](https://developers.cloudflare.com/pages/)
+- [Next.js on Cloudflare](https://developers.cloudflare.com/pages/framework-guides/nextjs/)
+
+## Learn More About Cloudflare
+
+- [Cloudflare D1 Documentation](https://developers.cloudflare.com/d1/)
+- [Cloudflare R2 Documentation](https://developers.cloudflare.com/r2/)
+- [Cloudflare Turnstile Documentation](https://developers.cloudflare.com/turnstile/)
