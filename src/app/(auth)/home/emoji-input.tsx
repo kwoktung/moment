@@ -9,12 +9,12 @@ import { Theme } from "emoji-picker-react";
 
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
-interface EmojiButtonProps {
+interface EmojiInputProps {
   onEmojiSelect: (emoji: string) => void;
   disabled?: boolean;
 }
 
-export function EmojiButton({ onEmojiSelect, disabled }: EmojiButtonProps) {
+export function EmojiInput({ onEmojiSelect, disabled }: EmojiInputProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { resolvedTheme } = useTheme();
@@ -81,3 +81,4 @@ export function EmojiButton({ onEmojiSelect, disabled }: EmojiButtonProps) {
     </div>
   );
 }
+

@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Paperclip, X, Image as ImageIcon } from "lucide-react";
 import { apiClient } from "@/lib/client";
 import { ApiError } from "@/lib/api-client";
-import { EmojiButton } from "@/components/emoji-button";
+import { EmojiInput } from "@/app/(auth)/home/emoji-input";
 
 const MAX_CHARACTERS = 280;
 const MAX_ATTACHMENTS = 4;
@@ -261,7 +261,7 @@ export const PostCreationForm = ({ onPostCreated }: PostCreationFormProps) => {
               </Button>
             </label>
           </div>
-          <EmojiButton
+          <EmojiInput
             onEmojiSelect={handleEmojiSelect}
             disabled={submitting}
           />
