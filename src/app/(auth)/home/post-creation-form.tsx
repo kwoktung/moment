@@ -261,10 +261,7 @@ export const PostCreationForm = ({ onPostCreated }: PostCreationFormProps) => {
               </Button>
             </label>
           </div>
-          <EmojiInput
-            onEmojiSelect={handleEmojiSelect}
-            disabled={submitting}
-          />
+          <EmojiInput onEmojiSelect={handleEmojiSelect} disabled={submitting} />
           <div
             className={`text-sm ml-auto ${
               isOverLimit
