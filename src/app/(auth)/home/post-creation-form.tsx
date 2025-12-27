@@ -4,7 +4,6 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
 import { Paperclip, X, Image as ImageIcon } from "lucide-react";
 import { apiClient } from "@/lib/client";
 import { ApiError } from "@/lib/api-client";
@@ -173,126 +172,116 @@ export const PostCreationForm = ({ onPostCreated }: PostCreationFormProps) => {
   const canSubmit = text.trim().length > 0 && !isOverLimit && !submitting;
 
   return (
-    <Card className="mb-6">
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-6">
-            <Textarea
-              ref={textareaRef}
-              placeholder="What's happening?"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className="min-h-24 resize-none"
-              maxLength={MAX_CHARACTERS + 100} // Allow typing past limit for visual feedback
-            />
+    <div className="border rounded-lg p-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Textarea
+          ref={textareaRef}
+          placeholder="What's happening?"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          className="min-h-24 resize-none border-0 px-0 focus-visible:ring-0 shadow-none bg-transparent"
+          maxLength={MAX_CHARACTERS + 100}
+        />
 
-            {/* Attachment Previews */}
-            {attachments.length > 0 && (
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  {attachments.map((attachment, index) => (
-                    <div
-                      key={index}
-                      className="relative group rounded-lg overflow-hidden border"
-                    >
-                      {attachment.preview ? (
-                        <div className="relative aspect-video bg-muted">
-                          <Image
-                            src={attachment.preview}
-                            alt={attachment.file.name}
-                            fill
-                            className="object-cover"
-                            unoptimized
-                          />
-                          {attachment.uploading && (
-                            <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                              <div className="text-sm text-muted-foreground">
-                                Uploading...
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="p-4 bg-muted flex items-center gap-2">
-                          <Paperclip className="size-4 text-muted-foreground" />
-                          <span className="text-sm truncate flex-1">
-                            {attachment.file.name}
-                          </span>
-                          {attachment.uploading && (
-                            <div className="text-xs text-muted-foreground">
-                              Uploading...
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeAttachment(index)}
-                        disabled={submitting || attachment.uploading}
-                        className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  onChange={handleFileSelect}
-                  disabled={submitting || attachments.length >= MAX_ATTACHMENTS}
-                  className="hidden"
-                  id="file-input"
-                  accept="image/*,video/*,.pdf,.doc,.docx,.txt"
-                />
-                <label htmlFor="file-input">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    disabled={
-                      submitting || attachments.length >= MAX_ATTACHMENTS
-                    }
-                    className="cursor-pointer"
-                    asChild
-                  >
-                    <span title="Add image">
-                      <ImageIcon className="size-4" />
-                    </span>
-                  </Button>
-                </label>
-              </div>
-              <EmojiButton
-                onEmojiSelect={handleEmojiSelect}
-                disabled={submitting}
-              />
+        {/* Attachment Previews */}
+        {attachments.length > 0 && (
+          <div className="grid grid-cols-2 gap-2">
+            {attachments.map((attachment, index) => (
               <div
-                className={`text-sm ml-auto ${
-                  isOverLimit
-                    ? "text-destructive"
-                    : characterCount > MAX_CHARACTERS * 0.9
-                      ? "text-yellow-500"
-                      : "text-muted-foreground"
-                }`}
+                key={index}
+                className="relative group rounded-lg overflow-hidden border"
               >
-                {characterCount}/{MAX_CHARACTERS}
+                {attachment.preview ? (
+                  <div className="relative aspect-video bg-muted">
+                    <Image
+                      src={attachment.preview}
+                      alt={attachment.file.name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                    {attachment.uploading && (
+                      <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                        <div className="text-sm text-muted-foreground">
+                          Uploading...
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-muted flex items-center gap-2">
+                    <Paperclip className="size-4 text-muted-foreground" />
+                    <span className="text-sm truncate flex-1">
+                      {attachment.file.name}
+                    </span>
+                    {attachment.uploading && (
+                      <div className="text-xs text-muted-foreground">
+                        Uploading...
+                      </div>
+                    )}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeAttachment(index)}
+                  disabled={submitting || attachment.uploading}
+                  className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="size-4" />
+                </button>
               </div>
-              <Button type="submit" disabled={!canSubmit} className="min-w-24">
-                {submitting ? "Posting..." : "Post"}
-              </Button>
-            </div>
-            {error && (
-              <div className="text-sm text-destructive mt-2">{error}</div>
-            )}
+            ))}
           </div>
-        </form>
-      </CardContent>
-    </Card>
+        )}
+
+        <div className="flex items-center gap-2 pt-2 border-t">
+          <div className="relative">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={handleFileSelect}
+              disabled={submitting || attachments.length >= MAX_ATTACHMENTS}
+              className="hidden"
+              id="file-input"
+              accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+            />
+            <label htmlFor="file-input">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={submitting || attachments.length >= MAX_ATTACHMENTS}
+                className="cursor-pointer"
+                asChild
+              >
+                <span title="Add image">
+                  <ImageIcon className="size-4" />
+                </span>
+              </Button>
+            </label>
+          </div>
+          <EmojiButton
+            onEmojiSelect={handleEmojiSelect}
+            disabled={submitting}
+          />
+          <div
+            className={`text-sm ml-auto ${
+              isOverLimit
+                ? "text-destructive"
+                : characterCount > MAX_CHARACTERS * 0.9
+                  ? "text-yellow-500"
+                  : "text-muted-foreground"
+            }`}
+          >
+            {characterCount}/{MAX_CHARACTERS}
+          </div>
+          <Button type="submit" disabled={!canSubmit} className="min-w-20">
+            {submitting ? "Posting..." : "Post"}
+          </Button>
+        </div>
+        {error && <div className="text-sm text-destructive">{error}</div>}
+      </form>
+    </div>
   );
 };

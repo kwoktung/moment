@@ -228,7 +228,7 @@ export function AttachmentGallery({
         <button
           type="button"
           onClick={handleClose}
-          className="fixed top-4 right-4 z-50 p-3 rounded-full bg-black/30 hover:bg-black/50 text-white/80 hover:text-white transition-all duration-200"
+          className="fixed top-6 right-6 z-50 p-3 rounded-full bg-black/40 hover:bg-black/60 text-white/90 hover:text-white transition-all duration-200 backdrop-blur-sm"
           aria-label="Close gallery"
         >
           <X className="size-6" />
@@ -253,12 +253,12 @@ export function AttachmentGallery({
           type="button"
           onClick={() => emblaApi?.scrollPrev()}
           disabled={!canScrollPrev}
-          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 hover:bg-black/70 disabled:opacity-0 text-white transition-all z-10"
+          className="absolute left-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 hover:bg-black/60 disabled:opacity-0 text-white/90 hover:text-white transition-all z-10 backdrop-blur-sm"
           aria-label={`Previous attachment (${currentIndex + 1} of ${
             attachments.length
           })`}
         >
-          <ChevronLeft className="size-8" />
+          <ChevronLeft className="size-7" />
         </button>
 
         {/* Next button */}
@@ -266,16 +266,16 @@ export function AttachmentGallery({
           type="button"
           onClick={() => emblaApi?.scrollNext()}
           disabled={!canScrollNext}
-          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 hover:bg-black/70 disabled:opacity-0 text-white transition-all z-10"
+          className="absolute right-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 hover:bg-black/60 disabled:opacity-0 text-white/90 hover:text-white transition-all z-10 backdrop-blur-sm"
           aria-label={`Next attachment (${currentIndex + 1} of ${
             attachments.length
           })`}
         >
-          <ChevronRight className="size-8" />
+          <ChevronRight className="size-7" />
         </button>
 
         {/* Position indicator */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/90 text-sm font-medium bg-black/40 px-4 py-2 rounded-full backdrop-blur-sm">
           <span aria-live="polite">
             {currentIndex + 1} / {attachments.length}
           </span>

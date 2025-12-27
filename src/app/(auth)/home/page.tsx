@@ -53,9 +53,9 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-2xl px-4 py-8">
+      <div className="mx-auto max-w-3xl px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold"></h1>
+          <h1 className="text-xl font-semibold">Journal</h1>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link href="/profile">
@@ -68,7 +68,7 @@ const Dashboard = () => {
 
         <PostCreationForm onPostCreated={fetchPosts} />
 
-        <Separator className="mb-6" />
+        <Separator className="my-8" />
 
         <PostsFeed
           posts={posts}

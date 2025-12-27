@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Trash2 } from "lucide-react";
 import { formatRelative } from "date-fns";
@@ -44,28 +43,23 @@ export const PostsFeed = ({
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Your Posts</h2>
+    <div>
+      <h2 className="text-lg font-semibold mb-4">Posts</h2>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="text-muted-foreground">Loading posts...</div>
         </div>
       ) : posts.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            No posts yet. Create your first post above!
-          </CardContent>
-        </Card>
+        <div className="py-12 text-center text-muted-foreground">
+          No posts yet. Create your first post above!
+        </div>
       ) : (
-        posts.map((post) => (
-          <Card
-            key={post.id}
-            className="hover:bg-accent/50 transition-colors relative group"
-          >
-            <CardContent className="pt-6">
-              <div className="flex gap-4">
-                <Avatar>
+        <div className="space-y-6">
+          {posts.map((post) => (
+            <div key={post.id} className="group">
+              <div className="flex gap-3">
+                <Avatar className="size-10">
                   {post.user?.avatar && (
                     <AvatarImage
                       src={post.user.avatar}
@@ -80,8 +74,8 @@ export const PostsFeed = ({
                       : post.createdBy.toString().slice(-2)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">
                         {post.user
@@ -107,28 +101,26 @@ export const PostsFeed = ({
                       )}
                     </Button>
                   </div>
-                  <p className="text-base whitespace-pre-wrap break-words">
+                  <p className="mt-2 whitespace-pre-wrap break-words">
                     {post.text}
                   </p>
                   {post.attachments && post.attachments.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        {post.attachments.map((attachment, idx) => (
-                          <AttachmentItem
-                            key={idx}
-                            uri={attachment.uri}
-                            index={idx}
-                            onClick={() => openGallery(post.attachments, idx)}
-                          />
-                        ))}
-                      </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {post.attachments.map((attachment, idx) => (
+                        <AttachmentItem
+                          key={idx}
+                          uri={attachment.uri}
+                          index={idx}
+                          onClick={() => openGallery(post.attachments, idx)}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))
+            </div>
+          ))}
+        </div>
       )}
 
       {galleryState && (
