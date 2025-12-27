@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -7,6 +8,7 @@ import { Trash2 } from "lucide-react";
 import { formatRelative } from "date-fns";
 import { Post } from "./types";
 import { AttachmentItem } from "./attachment-item";
+import { AttachmentGallery } from "./gallery";
 
 interface PostsFeedProps {
   posts: Post[];
@@ -27,6 +29,20 @@ export const PostsFeed = ({
   deletingPostId,
   onDeletePost,
 }: PostsFeedProps) => {
+  const [galleryState, setGalleryState] = useState<{
+    open: boolean;
+    attachments: Array<{ uri: string }>;
+    initialIndex: number;
+  } | null>(null);
+
+  const openGallery = (attachments: Array<{ uri: string }>, index: number) => {
+    setGalleryState({ open: true, attachments, initialIndex: index });
+  };
+
+  const closeGallery = () => {
+    setGalleryState(null);
+  };
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">Your Posts</h2>
@@ -102,6 +118,7 @@ export const PostsFeed = ({
                             key={idx}
                             uri={attachment.uri}
                             index={idx}
+                            onClick={() => openGallery(post.attachments, idx)}
                           />
                         ))}
                       </div>
@@ -112,6 +129,15 @@ export const PostsFeed = ({
             </CardContent>
           </Card>
         ))
+      )}
+
+      {galleryState && (
+        <AttachmentGallery
+          attachments={galleryState.attachments}
+          initialIndex={galleryState.initialIndex}
+          open={galleryState.open}
+          onOpenChange={(open) => !open && closeGallery()}
+        />
       )}
     </div>
   );

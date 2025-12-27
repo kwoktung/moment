@@ -2,33 +2,45 @@
 
 import Image from "next/image";
 import { Video, File } from "lucide-react";
+import { getFileType, getFilename } from "./attachment-utils";
 
 interface AttachmentItemProps {
   uri: string;
   index?: number;
+  onClick?: () => void;
 }
-
-const getFileType = (filename: string): "image" | "video" | "unknown" => {
-  const lowerFilename = filename.toLowerCase();
-
-  const imageExtensions = /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)$/i;
-  const videoExtensions = /\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv|m4v)$/i;
-
-  if (imageExtensions.test(lowerFilename)) {
-    return "image";
-  }
-  if (videoExtensions.test(lowerFilename)) {
-    return "video";
-  }
-  return "unknown";
-};
 
 interface ImageAttachmentProps {
   uri: string;
+  onClick?: () => void;
 }
 
-const ImageAttachment = ({ uri }: ImageAttachmentProps) => {
-  const filename = uri.split("/").pop() || "Image attachment";
+const ImageAttachment = ({ uri, onClick }: ImageAttachmentProps) => {
+  const filename = getFilename(uri) || "Image attachment";
+
+  const imageElement = (
+    <Image
+      src={uri}
+      alt={filename}
+      fill
+      className="object-cover"
+      sizes="(max-width: 768px) 50vw, 25vw"
+      unoptimized
+    />
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="block rounded-lg overflow-hidden border hover:opacity-90 transition-opacity relative aspect-video w-full"
+      >
+        {imageElement}
+      </button>
+    );
+  }
+
   return (
     <a
       href={uri}
@@ -36,23 +48,36 @@ const ImageAttachment = ({ uri }: ImageAttachmentProps) => {
       rel="noopener noreferrer"
       className="block rounded-lg overflow-hidden border hover:opacity-90 transition-opacity relative aspect-video"
     >
-      <Image
-        src={uri}
-        alt={filename}
-        fill
-        className="object-cover"
-        sizes="(max-width: 768px) 50vw, 25vw"
-        unoptimized
-      />
+      {imageElement}
     </a>
   );
 };
 
 interface VideoAttachmentProps {
   uri: string;
+  onClick?: () => void;
 }
 
-const VideoAttachment = ({ uri }: VideoAttachmentProps) => {
+const VideoAttachment = ({ uri, onClick }: VideoAttachmentProps) => {
+  const content = (
+    <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover/video:text-foreground transition-colors">
+      <Video className="size-10" />
+      <span className="text-xs font-medium">Video</span>
+    </div>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex rounded-lg overflow-hidden border hover:opacity-90 transition-opacity relative aspect-video bg-muted items-center justify-center group/video w-full"
+      >
+        {content}
+      </button>
+    );
+  }
+
   return (
     <a
       href={uri}
@@ -60,10 +85,7 @@ const VideoAttachment = ({ uri }: VideoAttachmentProps) => {
       rel="noopener noreferrer"
       className="flex rounded-lg overflow-hidden border hover:opacity-90 transition-opacity relative aspect-video bg-muted items-center justify-center group/video"
     >
-      <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover/video:text-foreground transition-colors">
-        <Video className="size-10" />
-        <span className="text-xs font-medium">Video</span>
-      </div>
+      {content}
     </a>
   );
 };
@@ -87,16 +109,20 @@ const UnknownAttachment = ({ uri, filename }: UnknownAttachmentProps) => {
   );
 };
 
-export const AttachmentItem = ({ uri, index = 0 }: AttachmentItemProps) => {
-  const filename = uri.split("/").pop() || `Attachment ${index + 1}`;
+export const AttachmentItem = ({
+  uri,
+  index = 0,
+  onClick,
+}: AttachmentItemProps) => {
+  const filename = getFilename(uri) || `Attachment ${index + 1}`;
   const fileType = getFileType(filename);
 
   const renderAttachment = () => {
     switch (fileType) {
       case "image":
-        return <ImageAttachment uri={uri} />;
+        return <ImageAttachment uri={uri} onClick={onClick} />;
       case "video":
-        return <VideoAttachment uri={uri} />;
+        return <VideoAttachment uri={uri} onClick={onClick} />;
       case "unknown":
         return <UnknownAttachment uri={uri} filename={filename} />;
       default:
