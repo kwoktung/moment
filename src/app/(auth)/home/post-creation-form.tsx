@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Paperclip, X, Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 import { apiClient } from "@/lib/client";
 import { ApiError } from "@/lib/api-client";
 import { EmojiInput } from "@/app/(auth)/home/emoji-input";
+import { ImagePreviewGallery } from "@/app/(auth)/home/image-preview-gallery";
+import { ImageEditorModal } from "@/app/(auth)/home/image-editor-modal";
 
 const MAX_CHARACTERS = 280;
 const MAX_ATTACHMENTS = 4;
@@ -18,6 +19,9 @@ interface AttachmentPreview {
   id?: number;
   filename?: string;
   uploading?: boolean;
+  editedFile?: File;
+  editedPreview?: string;
+  hasEdits?: boolean;
 }
 
 interface PostCreationFormProps {
@@ -29,6 +33,7 @@ export const PostCreationForm = ({ onPostCreated }: PostCreationFormProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [attachments, setAttachments] = useState<AttachmentPreview[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -61,8 +66,12 @@ export const PostCreationForm = ({ onPostCreated }: PostCreationFormProps) => {
   const removeAttachment = (index: number) => {
     setAttachments((prev) => {
       const updated = [...prev];
+      // Revoke both original and edited preview URLs
       if (updated[index].preview) {
         URL.revokeObjectURL(updated[index].preview);
+      }
+      if (updated[index].editedPreview) {
+        URL.revokeObjectURL(updated[index].editedPreview);
       }
       updated.splice(index, 1);
       return updated;
@@ -87,12 +96,34 @@ export const PostCreationForm = ({ onPostCreated }: PostCreationFormProps) => {
     }, 0);
   };
 
+  const handleEditSave = (editedFile: File) => {
+    if (editingIndex === null) return;
+
+    setAttachments((prev) => {
+      const updated = [...prev];
+      // Revoke old edited preview if exists
+      if (updated[editingIndex].editedPreview) {
+        URL.revokeObjectURL(updated[editingIndex].editedPreview);
+      }
+      updated[editingIndex] = {
+        ...updated[editingIndex],
+        editedFile,
+        editedPreview: URL.createObjectURL(editedFile),
+        hasEdits: true,
+      };
+      return updated;
+    });
+    setEditingIndex(null);
+  };
+
   const uploadAttachment = async (
     attachment: AttachmentPreview,
   ): Promise<number> => {
     try {
+      // Use edited file if exists, otherwise use original file
+      const fileToUpload = attachment.editedFile || attachment.file;
       const data = await apiClient.attachment.postApiAttachment({
-        file: attachment.file as File,
+        file: fileToUpload as File,
       });
       return data.data.id;
     } catch (err) {
@@ -155,6 +186,9 @@ export const PostCreationForm = ({ onPostCreated }: PostCreationFormProps) => {
         if (att.preview) {
           URL.revokeObjectURL(att.preview);
         }
+        if (att.editedPreview) {
+          URL.revokeObjectURL(att.editedPreview);
+        }
       });
 
       // Notify parent to refresh posts
@@ -186,53 +220,12 @@ export const PostCreationForm = ({ onPostCreated }: PostCreationFormProps) => {
 
         {/* Attachment Previews */}
         {attachments.length > 0 && (
-          <div className="grid grid-cols-2 gap-2">
-            {attachments.map((attachment, index) => (
-              <div
-                key={index}
-                className="relative group rounded-lg overflow-hidden border"
-              >
-                {attachment.preview ? (
-                  <div className="relative aspect-video bg-muted">
-                    <Image
-                      src={attachment.preview}
-                      alt={attachment.file.name}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                    {attachment.uploading && (
-                      <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                        <div className="text-sm text-muted-foreground">
-                          Uploading...
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="p-3 bg-muted flex items-center gap-2">
-                    <Paperclip className="size-4 text-muted-foreground" />
-                    <span className="text-sm truncate flex-1">
-                      {attachment.file.name}
-                    </span>
-                    {attachment.uploading && (
-                      <div className="text-xs text-muted-foreground">
-                        Uploading...
-                      </div>
-                    )}
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => removeAttachment(index)}
-                  disabled={submitting || attachment.uploading}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-            ))}
-          </div>
+          <ImagePreviewGallery
+            attachments={attachments}
+            onEdit={setEditingIndex}
+            onRemove={removeAttachment}
+            disabled={submitting}
+          />
         )}
 
         <div className="flex items-center gap-2 pt-2 border-t">
@@ -280,6 +273,20 @@ export const PostCreationForm = ({ onPostCreated }: PostCreationFormProps) => {
         </div>
         {error && <div className="text-sm text-destructive">{error}</div>}
       </form>
+
+      {/* Image Editor Modal */}
+      {editingIndex !== null && attachments[editingIndex] && (
+        <ImageEditorModal
+          open={editingIndex !== null}
+          imageUrl={
+            attachments[editingIndex].preview ||
+            URL.createObjectURL(attachments[editingIndex].file)
+          }
+          filename={attachments[editingIndex].file.name}
+          onOpenChange={(open) => !open && setEditingIndex(null)}
+          onSave={handleEditSave}
+        />
+      )}
     </div>
   );
 };
