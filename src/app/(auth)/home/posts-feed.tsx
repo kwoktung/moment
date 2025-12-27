@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Trash2, MoreHorizontal } from "lucide-react";
 import { Post } from "./types";
 import { AttachmentGallery } from "./gallery";
 import { ImageGrid } from "./image-grid";
@@ -38,8 +44,7 @@ export const PostsFeed = ({
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-4">Posts</h2>
-
+      <h2 className="text-lg font-semibold mb-4 hidden">Posts</h2>
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="text-muted-foreground">Loading posts...</div>
@@ -49,11 +54,11 @@ export const PostsFeed = ({
           No posts yet. Create your first post above!
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {posts.map((post) => (
             <div key={post.id} className="group">
               <div className="flex gap-3">
-                <Avatar className="size-10">
+                <Avatar className="size-9">
                   {post.user?.avatar && (
                     <AvatarImage
                       src={post.user.avatar}
@@ -83,22 +88,40 @@ export const PostsFeed = ({
                         · {formatTimestamp(post.createdAt)}
                       </span>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDeletePost(post.id)}
-                      disabled={deletingPostId === post.id}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      {deletingPostId === post.id ? (
-                        <div className="h-4 w-4 border-2 border-destructive border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
+                          disabled={deletingPostId === post.id}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => onDeletePost(post.id)}
+                          disabled={deletingPostId === post.id}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          {deletingPostId === post.id ? (
+                            <>
+                              <div className="h-4 w-4 mr-2 border-2 border-destructive border-t-transparent rounded-full animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  <p className="mt-2 whitespace-pre-wrap break-words">
+                  <p className="mt-1 whitespace-pre-wrap break-words">
                     {post.text}
                   </p>
                   {post.attachments && post.attachments.length > 0 && (
@@ -113,7 +136,6 @@ export const PostsFeed = ({
           ))}
         </div>
       )}
-
       {galleryState && (
         <AttachmentGallery
           attachments={galleryState.attachments}

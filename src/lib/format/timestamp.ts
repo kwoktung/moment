@@ -16,7 +16,7 @@ export const formatTimestamp = (dateString: string): string => {
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   // Less than 1 minute
-  if (seconds < 60) return 'now';
+  if (seconds < 60) return "now";
 
   // Less than 1 hour
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
@@ -31,10 +31,10 @@ export const formatTimestamp = (dateString: string): string => {
   if (seconds < 2592000) return `${Math.floor(seconds / 604800)}w`;
 
   // Older than 1 month: show absolute date
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    ...(date.getFullYear() !== now.getFullYear() && { year: 'numeric' })
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(date.getFullYear() !== now.getFullYear() && { year: "numeric" }),
   });
 };
 
@@ -46,12 +46,12 @@ export const formatTimestamp = (dateString: string): string => {
  */
 export const formatFullTimestamp = (dateString: string): string => {
   const date = new Date(dateString);
-  return date.toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
   });
 };
