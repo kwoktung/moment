@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Paperclip, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { formatRelative } from "date-fns";
 import { Post } from "./types";
+import { AttachmentItem } from "./attachment-item";
 
 interface PostsFeedProps {
   posts: Post[];
@@ -97,46 +97,13 @@ export const PostsFeed = ({
                   {post.attachments && post.attachments.length > 0 && (
                     <div className="mt-3 space-y-2">
                       <div className="grid grid-cols-2 gap-2">
-                        {post.attachments.map((attachment, idx) => {
-                          const filename = attachment.uri.split("/").pop();
-                          const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(
-                            filename || "",
-                          );
-
-                          return (
-                            <div key={idx} className="relative group">
-                              {isImage ? (
-                                <a
-                                  href={attachment.uri}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block rounded-lg overflow-hidden border hover:opacity-90 transition-opacity relative aspect-video"
-                                >
-                                  <Image
-                                    src={attachment.uri}
-                                    alt={`Attachment ${idx + 1}`}
-                                    fill
-                                    className="object-cover"
-                                    sizes="(max-width: 768px) 50vw, 25vw"
-                                    unoptimized
-                                  />
-                                </a>
-                              ) : (
-                                <a
-                                  href={attachment.uri}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2 p-3 rounded-lg border hover:bg-accent transition-colors"
-                                >
-                                  <Paperclip className="size-4 text-muted-foreground" />
-                                  <span className="text-sm truncate flex-1">
-                                    {filename}
-                                  </span>
-                                </a>
-                              )}
-                            </div>
-                          );
-                        })}
+                        {post.attachments.map((attachment, idx) => (
+                          <AttachmentItem
+                            key={idx}
+                            uri={attachment.uri}
+                            index={idx}
+                          />
+                        ))}
                       </div>
                     </div>
                   )}
