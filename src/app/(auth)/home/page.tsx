@@ -38,7 +38,7 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-3xl px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Journal</h1>
+          <h1 className="text-xl font-semibold">Moment</h1>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link href="/profile">

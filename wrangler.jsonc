@@ -4,7 +4,7 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "journal-project",
+  "name": "moment",
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-03-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
@@ -18,7 +18,7 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "journal-project",
+      "database_name": "moment",
       "database_id": "400e1ca0-0eef-4806-bda2-cc95484f9555",
       "migrations_dir": "./src/database/migrations",
     },
@@ -26,7 +26,7 @@
   "r2_buckets": [
     {
       "binding": "R2",
-      "bucket_name": "journal-project",
+      "bucket_name": "moment",
     },
   ],
   /**

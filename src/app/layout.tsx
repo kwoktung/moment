@@ -21,9 +21,9 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Journal",
+  title: "Moment",
   description:
-    "A personal journal application to capture your thoughts and memories",
+    "A personal moment application to capture your thoughts and memories",
 };
 
 export default function RootLayout({

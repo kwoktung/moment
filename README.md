@@ -1,4 +1,4 @@
-# Journal Project
+# Moment Project
 
 A tutorial/demo project for learning and exploring the **Cloudflare stack** with Next.js.
 

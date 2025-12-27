@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/client";
 import { queryKeys } from "@/lib/query-keys";
+import { User } from "./use-auth";
 
 export type Post = {
   id: number;
   text: string;
   createdBy: number;
-  user: any | null;
+  user: User | null;
   createdAt: string;
   updatedAt: string | null;
   attachments: Array<{

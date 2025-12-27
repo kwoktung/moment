@@ -1,6 +1,6 @@
 {
   "openapi": "3.1.0",
-  "info": { "title": "Journal API", "version": "1.0.0" },
+  "info": { "title": "Moment API", "version": "1.0.0" },
   "components": {
     "securitySchemes": {
       "bearerAuth": {

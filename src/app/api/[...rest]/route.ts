@@ -27,7 +27,7 @@ app.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
 app.doc31("/docs", {
   openapi: "3.1.0",
   info: {
-    title: "Journal API",
+    title: "Moment API",
     version: "1.0.0",
   },
 });
@@ -36,7 +36,7 @@ app.get(
   "/scalar",
   Scalar({
     url: `${basePath}/docs`,
-    title: "Journal API",
+    title: "Moment API",
   }),
 );
 

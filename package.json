@@ -1,5 +1,5 @@
 {
-  "name": "journal-project",
+  "name": "moment",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,9 +15,9 @@
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "wrangler d1 migrations apply journal-project",
-    "db:migrate:remote": "wrangler d1 migrations apply journal-project --remote",
-    "db:reset": "wrangler d1 migrations reset journal-project",
+    "db:migrate": "wrangler d1 migrations apply moment",
+    "db:migrate:remote": "wrangler d1 migrations apply moment --remote",
+    "db:reset": "wrangler d1 migrations reset moment",
     "api:generate": "rm -rf openapi.json && wget http://localhost:4000/api/docs -O openapi.json && rm -rf src/lib/api-client && openapi --input ./openapi.json --output ./src/lib/api-client --name ApiClient",
     "secrets:bulk": "wrangler secret bulk .env.production"
   },

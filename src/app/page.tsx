@@ -26,7 +26,7 @@ export default async function Home() {
       {/* Header */}
       <header className="border-b">
         <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold">Journal</h1>
+          <h1 className="text-xl font-bold">Moment</h1>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link href="/sign-in">
@@ -43,12 +43,12 @@ export default async function Home() {
       <section className="flex items-center justify-center min-h-[calc(100vh-73px)]">
         <div className="mx-auto max-w-6xl px-4 py-20 text-center">
           <h2 className="text-5xl font-bold mb-6">
-            Your Personal Journal
+            Your Personal Moment
             <br />
           </h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Share your thoughts, moments, and memories with rich media support.
-            A clean, modern journaling experience built for you.
+            A clean, modern moment experience built for you.
           </p>
           <div className="flex gap-4 items-center justify-center">
             <Link href="/sign-up">
@@ -185,7 +185,7 @@ export default async function Home() {
       {/* Footer */}
       <footer className="border-t mt-20">
         <div className="mx-auto max-w-6xl px-4 py-8 text-center text-sm text-muted-foreground">
-          <p>Your personal journal platform. Simple, elegant, and powerful.</p>
+          <p>Your personal moment platform. Simple, elegant, and powerful.</p>
         </div>
       </footer>
     </div>

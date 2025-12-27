@@ -9,7 +9,7 @@ import { DangerZoneSection } from "./danger-zone-section";
 import { useSession } from "@/hooks/queries/use-auth";
 
 const ProfilePage = () => {
-  const { data: user, isLoading, error, refetch } = useSession();
+  const { data: user, isLoading, error } = useSession();
 
   if (isLoading) {
     return (
