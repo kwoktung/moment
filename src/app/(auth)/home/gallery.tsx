@@ -32,7 +32,7 @@ const GalleryImage = ({ uri, isActive }: GalleryImageProps) => {
       <div className="relative max-h-[90vh] max-w-full aspect-auto">
         {!imageLoaded && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-muted-foreground/20 border-t-foreground rounded-full animate-spin" />
           </div>
         )}
         <div className="relative h-[90vh] w-[90vw]">
@@ -100,14 +100,14 @@ const GallerySlide = ({ attachment, isActive }: GallerySlideProps) => {
   }
 
   return (
-    <div className="flex items-center justify-center h-full w-full text-white">
+    <div className="flex items-center justify-center h-full w-full text-foreground">
       <div className="text-center">
         <p className="text-lg">Unsupported file type</p>
         <a
           href={attachment.uri}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-blue-400 hover:text-blue-300 underline"
+          className="text-sm text-primary hover:text-primary/80 underline"
         >
           Open in new tab
         </a>
@@ -211,7 +211,7 @@ export function AttachmentGallery({
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/95 z-50 animate-in fade-in-0 duration-200"
+        className="fixed inset-0 bg-background/95 z-50 animate-in fade-in-0 duration-200 backdrop-blur-sm"
         onClick={handleClose}
       />
 
@@ -228,7 +228,7 @@ export function AttachmentGallery({
         <button
           type="button"
           onClick={handleClose}
-          className="fixed top-6 right-6 z-50 p-3 rounded-full bg-black/40 hover:bg-black/60 text-white/90 hover:text-white transition-all duration-200 backdrop-blur-sm"
+          className="fixed top-6 right-6 z-50 p-3 rounded-full bg-muted/80 hover:bg-muted text-foreground/90 hover:text-foreground transition-all duration-200 backdrop-blur-sm"
           aria-label="Close gallery"
         >
           <X className="size-6" />
@@ -253,7 +253,7 @@ export function AttachmentGallery({
           type="button"
           onClick={() => emblaApi?.scrollPrev()}
           disabled={!canScrollPrev}
-          className="absolute left-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 hover:bg-black/60 disabled:opacity-0 text-white/90 hover:text-white transition-all z-10 backdrop-blur-sm"
+          className="absolute left-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-muted/80 hover:bg-muted disabled:opacity-0 text-foreground/90 hover:text-foreground transition-all z-10 backdrop-blur-sm"
           aria-label={`Previous attachment (${currentIndex + 1} of ${
             attachments.length
           })`}
@@ -266,7 +266,7 @@ export function AttachmentGallery({
           type="button"
           onClick={() => emblaApi?.scrollNext()}
           disabled={!canScrollNext}
-          className="absolute right-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 hover:bg-black/60 disabled:opacity-0 text-white/90 hover:text-white transition-all z-10 backdrop-blur-sm"
+          className="absolute right-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-muted/80 hover:bg-muted disabled:opacity-0 text-foreground/90 hover:text-foreground transition-all z-10 backdrop-blur-sm"
           aria-label={`Next attachment (${currentIndex + 1} of ${
             attachments.length
           })`}
@@ -275,11 +275,13 @@ export function AttachmentGallery({
         </button>
 
         {/* Position indicator */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/90 text-sm font-medium bg-black/40 px-4 py-2 rounded-full backdrop-blur-sm">
-          <span aria-live="polite">
-            {currentIndex + 1} / {attachments.length}
-          </span>
-        </div>
+        {attachments.length > 1 && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-foreground/90 text-sm font-medium bg-muted/80 px-4 py-2 rounded-full backdrop-blur-sm">
+            <span aria-live="polite">
+              {currentIndex + 1} / {attachments.length}
+            </span>
+          </div>
+        )}
 
         {/* Screen reader announcements */}
         <div aria-live="polite" aria-atomic="true" className="sr-only">
