@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,8 +10,8 @@ import {
 import { Trash2, MoreHorizontal } from "lucide-react";
 import { Post } from "./types";
 import { ImageGrid } from "./image-grid";
+import { UserAvatar } from "./user-avatar";
 import { formatTimestamp, formatFullTimestamp } from "@/lib/format/timestamp";
-
 interface PostItemProps {
   post: Post;
   isDeleting: boolean;
@@ -29,21 +28,7 @@ export const PostItem = ({
   return (
     <div className="group">
       <div className="flex gap-3">
-        <Avatar className="size-9">
-          {post.user?.avatar && (
-            <AvatarImage
-              src={post.user.avatar}
-              alt={post.user.displayName || post.user.username}
-            />
-          )}
-          <AvatarFallback>
-            {post.user
-              ? (post.user.displayName || post.user.username)
-                  .slice(0, 2)
-                  .toUpperCase()
-              : post.createdBy.toString().slice(-2)}
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar user={post.user} createdBy={post.createdBy} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
