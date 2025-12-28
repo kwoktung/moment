@@ -64,8 +64,9 @@ export function EmojiInput({ onEmojiSelect, disabled }: EmojiInputProps) {
           onClick={() => setShowEmojiPicker(true)}
           disabled={disabled}
           title="Add emoji"
+          className="cursor-pointer"
         >
-          <Smile className="size-4" />
+          <Smile className="size-6" />
         </Button>
         <Drawer.Root open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
           <Drawer.Portal>
@@ -122,9 +123,10 @@ export function EmojiInput({ onEmojiSelect, disabled }: EmojiInputProps) {
         size="icon"
         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
         disabled={disabled}
+        className="cursor-pointer"
         title="Add emoji"
       >
-        <Smile className="size-4" />
+        <Smile className="size-6" />
       </Button>
       {showEmojiPicker && mounted && (
         <div

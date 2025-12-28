@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { ProfilePictureSection } from "./profile-picture-section";
+import { ThemeSection } from "./theme-section";
 import { AccountActionsSection } from "./account-actions-section";
 import { DangerZoneSection } from "./danger-zone-section";
 import { useSession } from "@/hooks/queries/use-auth";
@@ -47,6 +48,8 @@ const ProfilePage = () => {
         </div>
 
         <ProfilePictureSection user={user ?? null} />
+
+        <ThemeSection />
 
         <AccountActionsSection />
 
