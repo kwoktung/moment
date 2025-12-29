@@ -10,9 +10,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useMounted } from "@/hooks/use-mounted";
 
 export const ThemeSection = () => {
   const { theme, setTheme } = useTheme();
+  const mounted = useMounted();
 
   return (
     <Card>
@@ -25,7 +27,7 @@ export const ThemeSection = () => {
       <CardContent>
         <div className="flex gap-2">
           <Button
-            variant={theme === "light" ? "default" : "outline"}
+            variant={mounted && theme === "light" ? "default" : "outline"}
             onClick={() => setTheme("light")}
             className="flex items-center gap-2"
           >
@@ -33,7 +35,7 @@ export const ThemeSection = () => {
             Light
           </Button>
           <Button
-            variant={theme === "dark" ? "default" : "outline"}
+            variant={mounted && theme === "dark" ? "default" : "outline"}
             onClick={() => setTheme("dark")}
             className="flex items-center gap-2"
           >
@@ -41,7 +43,7 @@ export const ThemeSection = () => {
             Dark
           </Button>
           <Button
-            variant={theme === "system" ? "default" : "outline"}
+            variant={mounted && theme === "system" ? "default" : "outline"}
             onClick={() => setTheme("system")}
             className="flex items-center gap-2"
           >
