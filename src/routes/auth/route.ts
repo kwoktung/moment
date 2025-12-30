@@ -1,21 +1,35 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { eq, or } from "drizzle-orm";
-import { userTable, postTable, attachmentTable } from "@/database/schema";
+import { eq, or, and, isNull } from "drizzle-orm";
+import {
+  userTable,
+  postTable,
+  attachmentTable,
+  refreshTokenTable,
+} from "@/database/schema";
 import { getDatabase } from "@/database/client";
 import { HttpResponse } from "@/lib/response";
 import {
-  getSessionFromCookie,
-  setSessionCookie,
-  clearSessionCookie,
+  getSession,
+  setAuthCookies,
+  deleteAuthCookies,
 } from "@/lib/auth/session";
-import { hashPassword, verifyPassword, createJWT } from "@/lib/auth";
+import { deleteCookie, getCookie } from "hono/cookie";
+import { ACCESS_TOKEN_COOKIE_NAME } from "@/config/config";
+import {
+  hashPassword,
+  verifyPassword,
+  createAccessToken,
+  createRefreshToken,
+  hashToken,
+  verifyJWT,
+} from "@/lib/auth";
 import {
   signIn,
   signUp,
   signOut,
-  getSession,
   deleteAccount,
+  refreshToken,
 } from "./definition";
 
 // App Setup
@@ -62,26 +76,37 @@ authApp.openapi(signIn, async (c) => {
     return c.json({ error: "Invalid credentials" }, 401);
   }
 
-  const token = await createJWT(
+  // Create access token (15 min)
+  const accessToken = await createAccessToken(
     {
       userId: user.id,
-      email: user.email,
-      username: user.username,
     },
     context.env.JWT_SECRET,
   );
 
-  setSessionCookie(c, token);
-
-  return c.json({
-    user: {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      displayName: user.displayName,
-      avatar: user.avatar,
+  // Create refresh token (7 days)
+  const refreshTokenValue = await createRefreshToken(
+    {
+      userId: user.id,
     },
+    context.env.JWT_SECRET,
+  );
+
+  // Store refresh token hash in database
+  const tokenHash = await hashToken(refreshTokenValue);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  await db.insert(refreshTokenTable).values({
+    userId: user.id,
+    tokenHash,
+    expiresAt,
   });
+
+  // Set cookies
+  setAuthCookies(c, accessToken, refreshTokenValue);
+
+  // Return both tokens
+  return c.json({ token: accessToken, refreshToken: refreshTokenValue });
 });
 
 authApp.openapi(signUp, async (c) => {
@@ -158,67 +183,62 @@ authApp.openapi(signUp, async (c) => {
     })
     .returning();
 
-  const token = await createJWT(
+  // Create access token (15 min)
+  const accessToken = await createAccessToken(
     {
       userId: newUser.id,
-      email: newUser.email,
-      username: newUser.username,
     },
     context.env.JWT_SECRET,
   );
 
-  setSessionCookie(c, token);
-
-  return c.json(
+  // Create refresh token (7 days)
+  const refreshTokenValue = await createRefreshToken(
     {
-      user: {
-        id: newUser.id,
-        email: newUser.email,
-        username: newUser.username,
-        displayName: newUser.displayName,
-        avatar: newUser.avatar,
-      },
+      userId: newUser.id,
     },
-    201,
+    context.env.JWT_SECRET,
   );
+
+  // Store refresh token hash in database
+  const tokenHash = await hashToken(refreshTokenValue);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  await db.insert(refreshTokenTable).values({
+    userId: newUser.id,
+    tokenHash,
+    expiresAt,
+  });
+
+  // Set cookies
+  setAuthCookies(c, accessToken, refreshTokenValue);
+
+  // Return both tokens
+  return c.json({ token: accessToken, refreshToken: refreshTokenValue }, 201);
 });
 
 authApp.openapi(signOut, async (c) => {
-  clearSessionCookie(c);
-  return c.json({ success: true });
-});
-
-authApp.openapi(getSession, async (c) => {
   const context = getCloudflareContext({ async: false });
-  const session = await getSessionFromCookie(c, context.env.JWT_SECRET);
-
-  if (!session) {
-    return c.json({ user: null });
-  }
-
   const db = getDatabase(context.env);
-  const user = await db
-    .select({
-      id: userTable.id,
-      email: userTable.email,
-      username: userTable.username,
-      displayName: userTable.displayName,
-      avatar: userTable.avatar,
-    })
-    .from(userTable)
-    .where(eq(userTable.id, session.userId))
-    .get();
 
-  if (!user) {
-    return c.json({ user: null });
+  const refreshTokenValue = getCookie(c, "refresh_token");
+
+  if (refreshTokenValue) {
+    const tokenHash = await hashToken(refreshTokenValue);
+    await db
+      .update(refreshTokenTable)
+      .set({ revokedAt: new Date() })
+      .where(eq(refreshTokenTable.tokenHash, tokenHash))
+      .run();
   }
 
-  return c.json({ user });
+  deleteAuthCookies(c);
+
+  return c.json({ success: true });
 });
 
 authApp.openapi(deleteAccount, async (c) => {
   const context = getCloudflareContext({ async: false });
-  const session = await getSessionFromCookie(c, context.env.JWT_SECRET);
+  const session = await getSession(c, context.env.JWT_SECRET);
 
   if (!session) {
     return c.json({ error: "Unauthorized" }, 401);
@@ -258,9 +278,64 @@ authApp.openapi(deleteAccount, async (c) => {
   await db.delete(userTable).where(eq(userTable.id, userId)).run();
 
   // Clear the session cookie
-  clearSessionCookie(c);
+  deleteCookie(c, ACCESS_TOKEN_COOKIE_NAME, { path: "/" });
 
   return c.json({ success: true });
+});
+
+authApp.openapi(refreshToken, async (c) => {
+  const context = getCloudflareContext({ async: false });
+  const body = c.req.valid("json");
+
+  // Get refresh token from body or cookie
+  let refreshTokenValue = body.refreshToken;
+  if (!refreshTokenValue) {
+    refreshTokenValue = getCookie(c, "refresh_token");
+  }
+
+  if (!refreshTokenValue) {
+    return c.json({ error: "Refresh token required" }, 401);
+  }
+
+  // Verify token
+  const payload = await verifyJWT(refreshTokenValue, context.env.JWT_SECRET);
+
+  if (!payload || payload.tokenType !== "refresh") {
+    return c.json({ error: "Invalid refresh token" }, 401);
+  }
+
+  // Check database
+  const db = getDatabase(context.env);
+  const tokenHash = await hashToken(refreshTokenValue);
+
+  const storedToken = await db
+    .select()
+    .from(refreshTokenTable)
+    .where(
+      and(
+        eq(refreshTokenTable.tokenHash, tokenHash),
+        isNull(refreshTokenTable.revokedAt),
+      ),
+    )
+    .get();
+
+  if (!storedToken || storedToken.expiresAt < new Date()) {
+    return c.json({ error: "Refresh token expired or revoked" }, 401);
+  }
+
+  // Issue new access token
+  const newAccessToken = await createAccessToken(
+    {
+      userId: payload.userId,
+    },
+    context.env.JWT_SECRET,
+  );
+
+  // Set cookies (using the same refresh token that was provided)
+  setAuthCookies(c, newAccessToken, refreshTokenValue);
+
+  // Return both tokens (using the same refresh token that was provided)
+  return c.json({ token: newAccessToken, refreshToken: refreshTokenValue });
 });
 
 export default authApp;

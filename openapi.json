@@ -48,25 +48,18 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": { "type": "number" },
-                        "email": { "type": "string" },
-                        "username": { "type": "string" },
-                        "displayName": { "type": ["string", "null"] },
-                        "avatar": { "type": ["string", "null"] }
-                      },
-                      "required": [
-                        "id",
-                        "email",
-                        "username",
-                        "displayName",
-                        "avatar"
-                      ]
+                    "token": {
+                      "type": "string",
+                      "description": "JWT access token",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "refreshToken": {
+                      "type": "string",
+                      "description": "JWT refresh token",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                     }
                   },
-                  "required": ["user"]
+                  "required": ["token", "refreshToken"]
                 }
               }
             }
@@ -128,25 +121,18 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": { "type": "number" },
-                        "email": { "type": "string" },
-                        "username": { "type": "string" },
-                        "displayName": { "type": ["string", "null"] },
-                        "avatar": { "type": ["string", "null"] }
-                      },
-                      "required": [
-                        "id",
-                        "email",
-                        "username",
-                        "displayName",
-                        "avatar"
-                      ]
+                    "token": {
+                      "type": "string",
+                      "description": "JWT access token",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "refreshToken": {
+                      "type": "string",
+                      "description": "JWT refresh token",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                     }
                   },
-                  "required": ["user"]
+                  "required": ["token", "refreshToken"]
                 }
               }
             }
@@ -177,43 +163,6 @@
         }
       }
     },
-    "/api/auth/session": {
-      "get": {
-        "tags": ["auth"],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "type": ["object", "null"],
-                      "properties": {
-                        "id": { "type": "number" },
-                        "email": { "type": "string" },
-                        "username": { "type": "string" },
-                        "displayName": { "type": ["string", "null"] },
-                        "avatar": { "type": ["string", "null"] }
-                      },
-                      "required": [
-                        "id",
-                        "email",
-                        "username",
-                        "displayName",
-                        "avatar"
-                      ]
-                    }
-                  },
-                  "required": ["user"]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/auth/account": {
       "delete": {
         "tags": ["auth"],
@@ -231,6 +180,50 @@
             }
           },
           "401": { "description": "Unauthorized - Not logged in" }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": ["auth"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": {
+                    "type": "string",
+                    "description": "Refresh token (optional if sent via cookie)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully refreshed access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "description": "New JWT access token"
+                    },
+                    "refreshToken": {
+                      "type": "string",
+                      "description": "JWT refresh token"
+                    }
+                  },
+                  "required": ["token", "refreshToken"]
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid or expired refresh token" }
         }
       }
     },
@@ -530,6 +523,44 @@
           "500": {
             "description": "Internal server error - Failed to cleanup attachments"
           }
+        }
+      }
+    },
+    "/api/user/me": {
+      "get": {
+        "tags": ["user"],
+        "responses": {
+          "200": {
+            "description": "Current user information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": ["object", "null"],
+                      "properties": {
+                        "id": { "type": "number" },
+                        "email": { "type": "string" },
+                        "username": { "type": "string" },
+                        "displayName": { "type": ["string", "null"] },
+                        "avatar": { "type": ["string", "null"] }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "username",
+                        "displayName",
+                        "avatar"
+                      ]
+                    }
+                  },
+                  "required": ["user"]
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized - Authentication required" }
         }
       }
     },

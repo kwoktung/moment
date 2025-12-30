@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { User } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { PostCreationForm } from "./post-creation-form";
 import { PostsFeed } from "./posts-feed";
 import { usePosts } from "@/hooks/queries/use-posts";
@@ -39,20 +38,14 @@ const Dashboard = () => {
       <div className="mx-auto max-w-3xl px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-xl font-semibold">Moment</h1>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Link href="/profile">
-              <Button variant="ghost" size="icon" title="Profile">
-                <User className="size-4" />
-              </Button>
-            </Link>
-          </div>
+          <Link href="/profile">
+            <Button variant="ghost" size="icon" title="Profile">
+              <User className="size-6" />
+            </Button>
+          </Link>
         </div>
-
         <PostCreationForm />
-
-        <Separator className="my-8" />
-
+        <Separator className="my-6" />
         <PostsFeed
           posts={posts}
           loading={loading}

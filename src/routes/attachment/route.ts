@@ -2,7 +2,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { createContext } from "@/lib/context";
 import { HttpResponse } from "@/lib/response";
-import { getSessionFromCookie } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 import { getDatabase } from "@/database/client";
 import { attachmentTable } from "@/database/schema";
 import { getAttachment, createAttachment } from "./definition";
@@ -43,7 +43,7 @@ attachmentApp.openapi(createAttachment, async (c) => {
   try {
     // Check authentication
     const context = getCloudflareContext({ async: false });
-    const session = await getSessionFromCookie(c, context.env.JWT_SECRET);
+    const session = await getSession(c, context.env.JWT_SECRET);
 
     if (!session) {
       return HttpResponse.unauthorized(c, "Authentication required");

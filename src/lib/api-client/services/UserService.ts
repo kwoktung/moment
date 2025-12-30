@@ -7,6 +7,21 @@ import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class UserService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
+     * @returns any Current user information
+     * @throws ApiError
+     */
+    public getApiUserMe(): CancelablePromise<{
+        user: any | null;
+    }> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/api/user/me',
+            errors: {
+                401: `Unauthorized - Authentication required`,
+            },
+        });
+    }
+    /**
      * @param requestBody
      * @returns any Avatar updated successfully
      * @throws ApiError

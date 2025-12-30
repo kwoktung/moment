@@ -18,3 +18,7 @@ export const userSchema = z.object({
 export const updateAvatarResponseSchema = z.object({
   user: userSchema,
 });
+
+export const getUserResponseSchema = z.object({
+  user: userSchema.nullable(),
+});

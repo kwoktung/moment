@@ -5,8 +5,6 @@ describe("JWT", () => {
   const secret = "test-secret-key-for-jwt-validation";
   const payload: Omit<JWTPayload, "iat" | "exp"> = {
     userId: 1,
-    email: "test@example.com",
-    username: "testuser",
   };
 
   describe("createJWT", () => {
@@ -44,8 +42,6 @@ describe("JWT", () => {
 
       expect(verified).not.toBeNull();
       expect(verified?.userId).toBe(payload.userId);
-      expect(verified?.email).toBe(payload.email);
-      expect(verified?.username).toBe(payload.username);
       expect(verified?.iat).toBeDefined();
       expect(verified?.exp).toBeDefined();
     });
@@ -85,8 +81,6 @@ describe("JWT", () => {
       expect(verified).not.toBeNull();
       if (verified) {
         expect(verified.userId).toBe(payload.userId);
-        expect(verified.email).toBe(payload.email);
-        expect(verified.username).toBe(payload.username);
       }
     });
   });
@@ -98,8 +92,6 @@ describe("JWT", () => {
 
       expect(verified).not.toBeNull();
       expect(verified?.userId).toBe(payload.userId);
-      expect(verified?.email).toBe(payload.email);
-      expect(verified?.username).toBe(payload.username);
     });
 
     it("should handle multiple create and verify cycles", async () => {

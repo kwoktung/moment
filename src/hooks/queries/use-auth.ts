@@ -14,7 +14,7 @@ export function useSession() {
   return useQuery({
     queryKey: queryKeys.auth.session(),
     queryFn: async () => {
-      const response = await apiClient.auth.getApiAuthSession();
+      const response = await apiClient.user.getApiUserMe();
       return response.user as User | null;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes - session doesn't change often

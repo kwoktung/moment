@@ -41,7 +41,7 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
 
 const signUpSchema = z
   .object({
-    email: z.string().email("Please enter a valid email address"),
+    email: z.email("Please enter a valid email address"),
     username: z
       .string()
       .min(3, "Username must be at least 3 characters")
@@ -84,15 +84,19 @@ export default function SignUp() {
   });
 
   useEffect(() => {
-    // Load Turnstile script
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-    script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
+    // Don't initialize if widget already exists
+    if (widgetIdRef.current) {
+      return;
+    }
 
-    script.onload = () => {
-      if (turnstileRef.current && window.turnstile) {
+    // Check if script is already loaded
+    const existingScript = document.querySelector(
+      'script[src="https://challenges.cloudflare.com/turnstile/v0/api.js"]',
+    ) as HTMLScriptElement | null;
+
+    const initializeTurnstile = () => {
+      // Double-check widget doesn't exist before rendering
+      if (turnstileRef.current && window.turnstile && !widgetIdRef.current) {
         const widgetId = window.turnstile.render(turnstileRef.current, {
           sitekey: TURNSTILE_SITE_KEY,
           callback: (token: string) => {
@@ -109,15 +113,44 @@ export default function SignUp() {
       }
     };
 
+    let script: HTMLScriptElement | null = null;
+    let loadHandler: (() => void) | null = null;
+
+    if (existingScript) {
+      // Script already exists, just initialize if turnstile is available
+      if (window.turnstile) {
+        initializeTurnstile();
+      } else {
+        // Wait for script to load
+        loadHandler = initializeTurnstile;
+        existingScript.addEventListener("load", loadHandler);
+      }
+    } else {
+      // Load Turnstile script
+      script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.async = true;
+      script.defer = true;
+
+      loadHandler = initializeTurnstile;
+      script.onload = loadHandler;
+
+      document.body.appendChild(script);
+    }
+
     return () => {
+      // Cleanup event listener if it was added
+      if (loadHandler && existingScript) {
+        existingScript.removeEventListener("load", loadHandler);
+      }
+      // Cleanup widget
       if (widgetIdRef.current && window.turnstile) {
         window.turnstile.remove(widgetIdRef.current);
-      }
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
+        widgetIdRef.current = null;
       }
     };
-  }, [form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - form is stable from react-hook-form
 
   const onSubmit = async (data: SignUpFormValues) => {
     setError("");

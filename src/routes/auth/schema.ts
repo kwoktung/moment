@@ -34,30 +34,47 @@ export const signUpSchema = z.object({
   }),
 });
 
-export const userSchema = z.object({
-  id: z.number(),
-  email: z.string(),
-  username: z.string(),
-  displayName: z.string().nullable(),
-  avatar: z.string().nullable(),
-});
-
 export const signInResponseSchema = z.object({
-  user: userSchema,
+  token: z.string().openapi({
+    description: "JWT access token",
+    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  }),
+  refreshToken: z.string().openapi({
+    description: "JWT refresh token",
+    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  }),
 });
 
 export const signUpResponseSchema = z.object({
-  user: userSchema,
+  token: z.string().openapi({
+    description: "JWT access token",
+    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  }),
+  refreshToken: z.string().openapi({
+    description: "JWT refresh token",
+    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  }),
 });
 
 export const signOutResponseSchema = z.object({
   success: z.boolean(),
 });
 
-export const sessionResponseSchema = z.object({
-  user: userSchema.nullable(),
-});
-
 export const deleteAccountResponseSchema = z.object({
   success: z.boolean(),
+});
+
+export const refreshTokenRequestSchema = z.object({
+  refreshToken: z.string().optional().openapi({
+    description: "Refresh token (optional if sent via cookie)",
+  }),
+});
+
+export const refreshTokenResponseSchema = z.object({
+  token: z.string().openapi({
+    description: "New JWT access token",
+  }),
+  refreshToken: z.string().openapi({
+    description: "JWT refresh token",
+  }),
 });

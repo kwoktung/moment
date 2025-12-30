@@ -1,11 +1,11 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { HttpResponse } from "@/lib/response";
-import { getSessionFromCookie } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 import { getDatabase } from "@/database/client";
 import { userTable } from "@/database/schema";
 import { eq } from "drizzle-orm";
-import { updateAvatar } from "./definition";
+import { updateAvatar, getUser } from "./definition";
 
 const userApp = new OpenAPIHono({
   defaultHook: (result, c) => {
@@ -19,11 +19,39 @@ const userApp = new OpenAPIHono({
   },
 });
 
+userApp.openapi(getUser, async (c) => {
+  const context = getCloudflareContext({ async: false });
+  const session = await getSession(c, context.env.JWT_SECRET);
+
+  if (!session) {
+    return c.json({ user: null });
+  }
+
+  const db = getDatabase(context.env);
+  const user = await db
+    .select({
+      id: userTable.id,
+      email: userTable.email,
+      username: userTable.username,
+      displayName: userTable.displayName,
+      avatar: userTable.avatar,
+    })
+    .from(userTable)
+    .where(eq(userTable.id, session.userId))
+    .get();
+
+  if (!user) {
+    return c.json({ user: null });
+  }
+
+  return c.json({ user });
+});
+
 userApp.openapi(updateAvatar, async (c) => {
   try {
     // Check authentication
     const context = getCloudflareContext({ async: false });
-    const session = await getSessionFromCookie(c, context.env.JWT_SECRET);
+    const session = await getSession(c, context.env.JWT_SECRET);
 
     if (!session) {
       return c.json({ error: "Unauthorized - Authentication required" }, 401);

@@ -14,13 +14,15 @@ export function useSignIn() {
       return await apiClient.auth.postApiAuthSignIn(credentials);
     },
 
-    onSuccess: (data) => {
+    onSuccess: async () => {
+      // Fetch user session separately
+      const session = await apiClient.user.getApiUserMe();
+
       // Update session cache
-      queryClient.setQueryData(queryKeys.auth.session(), data.user);
+      queryClient.setQueryData(queryKeys.auth.session(), session.user);
 
       // Navigate
-      router.push("/home");
-      router.refresh();
+      router.replace("/home");
     },
   });
 }
@@ -40,13 +42,15 @@ export function useSignUp() {
       return await apiClient.auth.postApiAuthSignUp(data);
     },
 
-    onSuccess: (data) => {
+    onSuccess: async () => {
+      // Fetch user session separately
+      const session = await apiClient.user.getApiUserMe();
+
       // Update session cache
-      queryClient.setQueryData(queryKeys.auth.session(), data.user);
+      queryClient.setQueryData(queryKeys.auth.session(), session.user);
 
       // Navigate
-      router.push("/home");
-      router.refresh();
+      router.replace("/home");
     },
   });
 }

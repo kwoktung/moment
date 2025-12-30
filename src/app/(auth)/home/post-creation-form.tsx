@@ -214,7 +214,7 @@ export const PostCreationForm = () => {
           />
         )}
 
-        <div className="flex items-center gap-2 pt-2 border-t">
+        <div className="flex items-center gap-2 pt-4 border-t">
           <div className="relative">
             <input
               ref={fileInputRef}
@@ -236,7 +236,7 @@ export const PostCreationForm = () => {
                 asChild
               >
                 <span title="Add image">
-                  <ImageIcon className="size-4" />
+                  <ImageIcon className="size-6" />
                 </span>
               </Button>
             </label>

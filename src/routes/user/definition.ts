@@ -2,7 +2,27 @@ import { createRoute } from "@hono/zod-openapi";
 import {
   updateAvatarRequestSchema,
   updateAvatarResponseSchema,
+  getUserResponseSchema,
 } from "./schema";
+
+export const getUser = createRoute({
+  method: "get",
+  tags: ["user"],
+  path: "/me",
+  responses: {
+    200: {
+      description: "Current user information",
+      content: {
+        "application/json": {
+          schema: getUserResponseSchema,
+        },
+      },
+    },
+    401: {
+      description: "Unauthorized - Authentication required",
+    },
+  },
+});
 
 export const updateAvatar = createRoute({
   method: "patch",

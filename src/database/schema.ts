@@ -71,3 +71,25 @@ export const postTable = sqliteTable(
     ];
   },
 );
+
+// Refresh tokens table
+export const refreshTokenTable = sqliteTable(
+  "refresh_tokens",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").notNull(),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(unixepoch())`,
+    ),
+    revokedAt: integer("revoked_at", { mode: "timestamp" }),
+  },
+  (table) => {
+    return [
+      index("refresh_tokens_user_id_idx").on(table.userId),
+      index("refresh_tokens_token_hash_idx").on(table.tokenHash),
+      index("refresh_tokens_expires_at_idx").on(table.expiresAt),
+    ];
+  },
+);

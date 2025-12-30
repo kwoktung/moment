@@ -5,8 +5,9 @@ import {
   signInResponseSchema,
   signUpResponseSchema,
   signOutResponseSchema,
-  sessionResponseSchema,
   deleteAccountResponseSchema,
+  refreshTokenRequestSchema,
+  refreshTokenResponseSchema,
 } from "./schema";
 
 // Route Definitions
@@ -88,22 +89,6 @@ export const signOut = createRoute({
   },
 });
 
-export const getSession = createRoute({
-  method: "get",
-  tags: ["auth"],
-  path: "/session",
-  responses: {
-    200: {
-      description: "Success",
-      content: {
-        "application/json": {
-          schema: sessionResponseSchema,
-        },
-      },
-    },
-  },
-});
-
 export const deleteAccount = createRoute({
   method: "delete",
   tags: ["auth"],
@@ -119,6 +104,34 @@ export const deleteAccount = createRoute({
     },
     401: {
       description: "Unauthorized - Not logged in",
+    },
+  },
+});
+
+export const refreshToken = createRoute({
+  method: "post",
+  tags: ["auth"],
+  path: "/refresh",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: refreshTokenRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Successfully refreshed access token",
+      content: {
+        "application/json": {
+          schema: refreshTokenResponseSchema,
+        },
+      },
+    },
+    401: {
+      description: "Invalid or expired refresh token",
     },
   },
 });

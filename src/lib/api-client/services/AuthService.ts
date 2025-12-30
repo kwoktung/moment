@@ -23,13 +23,14 @@ export class AuthService {
             password: string;
         },
     ): CancelablePromise<{
-        user: {
-            id: number;
-            email: string;
-            username: string;
-            displayName: string | null;
-            avatar: string | null;
-        };
+        /**
+         * JWT access token
+         */
+        token: string;
+        /**
+         * JWT refresh token
+         */
+        refreshToken: string;
     }> {
         return this.httpRequest.request({
             method: 'POST',
@@ -71,13 +72,14 @@ export class AuthService {
             turnstileToken: string;
         },
     ): CancelablePromise<{
-        user: {
-            id: number;
-            email: string;
-            username: string;
-            displayName: string | null;
-            avatar: string | null;
-        };
+        /**
+         * JWT access token
+         */
+        token: string;
+        /**
+         * JWT refresh token
+         */
+        refreshToken: string;
     }> {
         return this.httpRequest.request({
             method: 'POST',
@@ -103,18 +105,6 @@ export class AuthService {
         });
     }
     /**
-     * @returns any Success
-     * @throws ApiError
-     */
-    public getApiAuthSession(): CancelablePromise<{
-        user: any | null;
-    }> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/auth/session',
-        });
-    }
-    /**
      * @returns any Success - Account deleted
      * @throws ApiError
      */
@@ -126,6 +116,38 @@ export class AuthService {
             url: '/api/auth/account',
             errors: {
                 401: `Unauthorized - Not logged in`,
+            },
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns any Successfully refreshed access token
+     * @throws ApiError
+     */
+    public postApiAuthRefresh(
+        requestBody?: {
+            /**
+             * Refresh token (optional if sent via cookie)
+             */
+            refreshToken?: string;
+        },
+    ): CancelablePromise<{
+        /**
+         * New JWT access token
+         */
+        token: string;
+        /**
+         * JWT refresh token
+         */
+        refreshToken: string;
+    }> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/auth/refresh',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                401: `Invalid or expired refresh token`,
             },
         });
     }
