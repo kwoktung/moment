@@ -1,31 +1,13 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { createContext } from "@/lib/context";
 import { HttpResponse } from "@/lib/response";
 import { getSession } from "@/lib/auth/session";
-import { getDatabase } from "@/database/client";
-import { attachmentTable } from "@/database/schema";
+import { createServices } from "@/services";
+import { ServiceError } from "@/lib/errors";
 import { getAttachment, createAttachment } from "./definition";
 import { createCache } from "@/lib/cache";
-
-// Helper function to generate timestamp-based filename
-// Uses crypto.randomUUID() for concurrent-safe uniqueness
-function generateTimestampFilename(originalFilename?: string): string {
-  const timestamp = Date.now();
-  // Use crypto.randomUUID() for guaranteed uniqueness in concurrent scenarios
-  const uuid = crypto.randomUUID();
-
-  // Extract extension from original filename if available
-  let extension = "";
-  if (originalFilename) {
-    const lastDot = originalFilename.lastIndexOf(".");
-    if (lastDot !== -1) {
-      extension = originalFilename.substring(lastDot);
-    }
-  }
-
-  return `${timestamp}-${uuid}${extension}`;
-}
 
 const attachmentApp = new OpenAPIHono({
   defaultHook: (result, c) => {
@@ -41,7 +23,6 @@ const attachmentApp = new OpenAPIHono({
 
 attachmentApp.openapi(createAttachment, async (c) => {
   try {
-    // Check authentication
     const context = getCloudflareContext({ async: false });
     const session = await getSession(c, context.env.JWT_SECRET);
 
@@ -52,61 +33,30 @@ attachmentApp.openapi(createAttachment, async (c) => {
     const formData = await c.req.formData();
     const file = formData.get("file") as File | null;
 
-    console.log(file);
-
     if (!file) {
       return HttpResponse.badRequest(c, "No file provided");
     }
-    if (file.size === 0) {
-      return HttpResponse.badRequest(c, "File is empty");
-    }
 
-    // Generate timestamp-based filename for R2 storage
-    const filename = generateTimestampFilename(file.name);
-    const fileBuffer = await file.arrayBuffer();
-
-    // Get R2 bucket from context
     const ctx = createContext(context.env);
+    const services = createServices(ctx);
 
-    // Upload file to R2 object storage
-    const r2UploadResult = await ctx.env.R2.put(filename, fileBuffer, {
-      httpMetadata: {
-        contentType: file.type || "application/octet-stream",
-      },
-      customMetadata: {
-        originalFilename: file.name || "",
-        uploadedAt: new Date().toISOString(),
-        uploadedBy: session.userId.toString(),
-      },
-    });
+    // Upload attachment to R2 and create database record
+    const attachment = await services.attachment.uploadAttachment(
+      file,
+      session.userId,
+    );
 
-    if (!r2UploadResult) {
+    return HttpResponse.created(c, attachment);
+  } catch (error) {
+    if (error instanceof ServiceError) {
       return HttpResponse.error(c, {
-        message: "Failed to upload file to storage",
-        status: 500,
+        message: error.message,
+        status: error.statusCode as ContentfulStatusCode,
       });
     }
-
-    // Save attachment record to database
-    const db = getDatabase(context.env);
-    const now = new Date();
-    const [attachmentRecord] = await db
-      .insert(attachmentTable)
-      .values({
-        filename,
-        createdAt: now,
-      })
-      .returning();
-
-    return HttpResponse.created(c, {
-      id: attachmentRecord.id,
-      filename,
-    });
-  } catch (error) {
     console.error("Attachment creation error:", error);
     return HttpResponse.error(c, {
-      message:
-        error instanceof Error ? error.message : "Failed to create attachment",
+      message: "Failed to create attachment",
       status: 500,
     });
   }
@@ -129,15 +79,11 @@ attachmentApp.openapi(getAttachment, async (c) => {
 
     // Use cache with custom fetcher function
     const response = await cache.withCache(cacheKey, async () => {
-      // Get R2 bucket from context
       const ctx = createContext(context.env);
+      const services = createServices(ctx);
 
-      // Fetch object from R2
-      const object = await ctx.env.R2.get(filename);
-
-      if (!object) {
-        return HttpResponse.notFound(c, "Attachment not found");
-      }
+      // Fetch object from R2 via service
+      const object = await services.attachment.getAttachment(filename);
 
       // Get content type from R2 metadata or default to octet-stream
       const contentType =
@@ -159,12 +105,15 @@ attachmentApp.openapi(getAttachment, async (c) => {
 
     return response;
   } catch (error) {
+    if (error instanceof ServiceError) {
+      return HttpResponse.error(c, {
+        message: error.message,
+        status: error.statusCode as ContentfulStatusCode,
+      });
+    }
     console.error("Attachment retrieval error:", error);
     return HttpResponse.error(c, {
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to retrieve attachment",
+      message: "Failed to retrieve attachment",
       status: 500,
     });
   }

@@ -1,10 +1,11 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { HttpResponse } from "@/lib/response";
 import { getSession } from "@/lib/auth/session";
-import { getDatabase } from "@/database/client";
-import { userTable } from "@/database/schema";
-import { eq } from "drizzle-orm";
+import { createContext } from "@/lib/context";
+import { createServices } from "@/services";
+import { ServiceError } from "@/lib/errors";
 import { updateAvatar, getUser } from "./definition";
 
 const userApp = new OpenAPIHono({
@@ -27,18 +28,10 @@ userApp.openapi(getUser, async (c) => {
     return c.json({ user: null });
   }
 
-  const db = getDatabase(context.env);
-  const user = await db
-    .select({
-      id: userTable.id,
-      email: userTable.email,
-      username: userTable.username,
-      displayName: userTable.displayName,
-      avatar: userTable.avatar,
-    })
-    .from(userTable)
-    .where(eq(userTable.id, session.userId))
-    .get();
+  const ctx = createContext(context.env);
+  const services = createServices(ctx);
+
+  const user = await services.user.getUserById(session.userId);
 
   if (!user) {
     return c.json({ user: null });
@@ -49,61 +42,35 @@ userApp.openapi(getUser, async (c) => {
 
 userApp.openapi(updateAvatar, async (c) => {
   try {
-    // Check authentication
     const context = getCloudflareContext({ async: false });
     const session = await getSession(c, context.env.JWT_SECRET);
 
     if (!session) {
-      return c.json({ error: "Unauthorized - Authentication required" }, 401);
+      return HttpResponse.unauthorized(c, "Authentication required");
     }
 
     const body = c.req.valid("json");
     const { avatar } = body;
 
-    const db = getDatabase(context.env);
-    const now = new Date();
+    const ctx = createContext(context.env);
+    const services = createServices(ctx);
 
     // Update user avatar
-    const [updatedUser] = await db
-      .update(userTable)
-      .set({
-        avatar,
-        updatedAt: now,
-      })
-      .where(eq(userTable.id, session.userId))
-      .returning({
-        id: userTable.id,
-        email: userTable.email,
-        username: userTable.username,
-        displayName: userTable.displayName,
-        avatar: userTable.avatar,
-      });
+    const user = await services.user.updateAvatar(session.userId, avatar);
 
-    if (!updatedUser) {
-      return c.json({ error: "User not found" }, 404);
-    }
-
-    return c.json(
-      {
-        user: {
-          id: updatedUser.id,
-          email: updatedUser.email,
-          username: updatedUser.username,
-          displayName: updatedUser.displayName,
-          avatar: updatedUser.avatar,
-        },
-      },
-      200,
-    );
+    return c.json({ user }, 200);
   } catch (error) {
+    if (error instanceof ServiceError) {
+      return HttpResponse.error(c, {
+        message: error.message,
+        status: error.statusCode as ContentfulStatusCode,
+      });
+    }
     console.error("Update avatar error:", error);
-    return c.json(
-      {
-        error: "Failed to update avatar",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      500,
-    );
+    return HttpResponse.error(c, {
+      message: "Failed to update avatar",
+      status: 500,
+    });
   }
 });
 

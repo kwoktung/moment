@@ -1,5 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { HttpResponse } from "@/lib/response";
 import { getSession } from "@/lib/auth/session";
 import { getDatabase } from "@/database/client";
@@ -18,7 +19,13 @@ import {
   cancelResumeRequest,
   getInviteCode,
 } from "./definition";
-import { generateInviteCode } from "@/lib/invite-code";
+import { createContext } from "@/lib/context";
+import { createServices } from "@/services";
+import {
+  ServiceError,
+  AlreadyInRelationshipError,
+  InvalidInvitationError,
+} from "@/lib/errors";
 import {
   getUserActiveRelationship,
   hasActiveRelationship,
@@ -43,58 +50,16 @@ relationshipApp.openapi(createInvite, async (c) => {
     const session = await getSession(c, context.env.JWT_SECRET);
 
     if (!session) {
-      return c.json({ error: "Unauthorized - Authentication required" }, 401);
+      return HttpResponse.unauthorized(c, "Authentication required");
     }
 
-    const db = getDatabase(context.env);
-    const now = new Date();
+    const ctx = createContext(context.env);
+    const services = createServices(ctx);
 
-    // Check if user already has an active relationship
-    if (await hasActiveRelationship(db, session.userId)) {
-      return c.json({ error: "You already have an active relationship" }, 403);
-    }
-
-    // Hard delete any existing invitations for this user
-    await db
-      .delete(invitationTable)
-      .where(eq(invitationTable.createdBy, session.userId));
-
-    // Generate unique invite code
-    let inviteCode = generateInviteCode();
-    let isUnique = false;
-    let attempts = 0;
-
-    while (!isUnique && attempts < 10) {
-      const existing = await db
-        .select()
-        .from(invitationTable)
-        .where(eq(invitationTable.inviteCode, inviteCode))
-        .limit(1);
-
-      if (existing.length === 0) {
-        isUnique = true;
-      } else {
-        inviteCode = generateInviteCode();
-        attempts++;
-      }
-    }
-
-    if (!isUnique) {
-      return c.json(
-        { error: "Failed to generate unique invite code. Please try again." },
-        500,
-      );
-    }
-
-    // Create invitation (never expires)
-    const [invitation] = await db
-      .insert(invitationTable)
-      .values({
-        inviteCode,
-        createdBy: session.userId,
-        createdAt: now,
-      })
-      .returning();
+    // Create invitation (validates no active relationship, deletes existing invites, generates unique code)
+    const invitation = await services.invitation.createInvitation(
+      session.userId,
+    );
 
     return c.json(
       {
@@ -103,14 +68,23 @@ relationshipApp.openapi(createInvite, async (c) => {
       201,
     );
   } catch (error) {
+    if (error instanceof AlreadyInRelationshipError) {
+      return HttpResponse.error(c, {
+        message: error.message,
+        status: error.statusCode as ContentfulStatusCode,
+      });
+    }
+    if (error instanceof ServiceError) {
+      return HttpResponse.error(c, {
+        message: error.message,
+        status: error.statusCode as ContentfulStatusCode,
+      });
+    }
     console.error("Create invite error:", error);
-    return c.json(
-      {
-        error: "Failed to create invitation",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      500,
-    );
+    return HttpResponse.error(c, {
+      message: "Failed to create invitation",
+      status: 500,
+    });
   }
 });
 
@@ -120,67 +94,23 @@ relationshipApp.openapi(acceptInvite, async (c) => {
     const session = await getSession(c, context.env.JWT_SECRET);
 
     if (!session) {
-      return c.json({ error: "Unauthorized - Authentication required" }, 401);
+      return HttpResponse.unauthorized(c, "Authentication required");
     }
 
     const body = c.req.valid("json");
     const { inviteCode } = body;
+
+    const ctx = createContext(context.env);
+    const services = createServices(ctx);
     const db = getDatabase(context.env);
-    const now = new Date();
 
-    // Check if user already has an active relationship
-    if (await hasActiveRelationship(db, session.userId)) {
-      return c.json({ error: "You already have an active relationship" }, 403);
-    }
+    // Accept invitation (validates, creates relationship, deletes invitation)
+    const relationship = await services.invitation.acceptInvitation(
+      inviteCode,
+      session.userId,
+    );
 
-    // Find invitation
-    const [invitation] = await db
-      .select()
-      .from(invitationTable)
-      .where(eq(invitationTable.inviteCode, inviteCode))
-      .limit(1);
-
-    if (!invitation) {
-      return c.json({ error: "Invitation not found" }, 404);
-    }
-
-    if (invitation.createdBy === session.userId) {
-      return c.json({ error: "You cannot accept your own invitation" }, 403);
-    }
-
-    // Check if invitation creator already has an active relationship
-    if (await hasActiveRelationship(db, invitation.createdBy)) {
-      return c.json(
-        { error: "Invitation creator is already in a relationship" },
-        400,
-      );
-    }
-
-    // Create couple in a transaction
-    // db.transaction
-    const result = await (async (tx) => {
-      // Create couple
-      const [couple] = await tx
-        .insert(relationshipTable)
-        .values({
-          user1Id: invitation.createdBy,
-          user2Id: session.userId,
-          status: "active",
-          startDate: null, // Will be set by users later
-          createdAt: now,
-          updatedAt: now,
-        })
-        .returning();
-
-      // Hard delete the invitation after successful acceptance
-      await tx
-        .delete(invitationTable)
-        .where(eq(invitationTable.id, invitation.id));
-
-      return couple;
-    })(db);
-
-    // Get partner info
+    // Get partner info (HTTP response formatting concern)
     const [partner] = await db
       .select({
         id: userTable.id,
@@ -189,22 +119,22 @@ relationshipApp.openapi(acceptInvite, async (c) => {
         avatar: userTable.avatar,
       })
       .from(userTable)
-      .where(eq(userTable.id, invitation.createdBy))
+      .where(eq(userTable.id, relationship.user1Id))
       .limit(1);
 
     return c.json(
       {
         relationship: {
-          id: result.id,
+          id: relationship.id,
           partner: {
             id: partner.id,
             username: partner.username,
             displayName: partner.displayName,
             avatar: partner.avatar,
           },
-          relationshipStartDate: result.startDate?.toISOString() || null,
-          status: result.status,
-          createdAt: result.createdAt?.toISOString() || now.toISOString(),
+          relationshipStartDate: null,
+          status: "active",
+          createdAt: new Date().toISOString(),
           permanentDeletionAt: null,
           resumeRequest: null,
         },
@@ -212,14 +142,26 @@ relationshipApp.openapi(acceptInvite, async (c) => {
       200,
     );
   } catch (error) {
+    if (
+      error instanceof AlreadyInRelationshipError ||
+      error instanceof InvalidInvitationError
+    ) {
+      return HttpResponse.error(c, {
+        message: error.message,
+        status: error.statusCode as ContentfulStatusCode,
+      });
+    }
+    if (error instanceof ServiceError) {
+      return HttpResponse.error(c, {
+        message: error.message,
+        status: error.statusCode as ContentfulStatusCode,
+      });
+    }
     console.error("Accept invite error:", error);
-    return c.json(
-      {
-        error: "Failed to accept invitation",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      500,
-    );
+    return HttpResponse.error(c, {
+      message: "Failed to accept invitation",
+      status: 500,
+    });
   }
 });
 
@@ -229,76 +171,34 @@ relationshipApp.openapi(getRelationship, async (c) => {
     const session = await getSession(c, context.env.JWT_SECRET);
 
     if (!session) {
-      return c.json({ error: "Unauthorized - Authentication required" }, 401);
+      return HttpResponse.unauthorized(c, "Authentication required");
     }
 
-    const db = getDatabase(context.env);
+    const ctx = createContext(context.env);
+    const services = createServices(ctx);
 
-    // Get user's active relationship
-    const couple = await getUserActiveRelationship(db, session.userId);
-
-    if (!couple) {
-      return c.json({ couple: null }, 200);
-    }
-
-    // Get partner ID
-    const partnerId = getPartnerId(couple, session.userId);
-
-    // Get partner info
-    const [partner] = await db
-      .select({
-        id: userTable.id,
-        username: userTable.username,
-        displayName: userTable.displayName,
-        avatar: userTable.avatar,
-      })
-      .from(userTable)
-      .where(eq(userTable.id, partnerId))
-      .limit(1);
-
-    if (!partner) {
-      return c.json({ couple: null }, 200);
-    }
-
-    // Calculate permanent deletion date if relationship has ended
-    const permanentDeletionAt = couple.endedAt
-      ? new Date(couple.endedAt.getTime() + 7 * 24 * 60 * 60 * 1000)
-      : null;
-
-    return c.json(
-      {
-        relationship: {
-          id: couple.id,
-          partner: {
-            id: partner.id,
-            username: partner.username,
-            displayName: partner.displayName,
-            avatar: partner.avatar,
-          },
-          relationshipStartDate: couple.startDate?.toISOString() || null,
-          status: couple.status,
-          createdAt:
-            couple.createdAt?.toISOString() || new Date().toISOString(),
-          permanentDeletionAt: permanentDeletionAt?.toISOString() || null,
-          resumeRequest: couple.resumeRequestedBy
-            ? {
-                requestedBy: couple.resumeRequestedBy,
-                requestedAt: couple.resumeRequestedAt?.toISOString() || null,
-              }
-            : null,
-        },
-      },
-      200,
+    // Get relationship with partner info
+    const relationship = await services.relationship.getRelationshipWithPartner(
+      session.userId,
     );
+
+    if (!relationship) {
+      return c.json({ relationship: null }, 200);
+    }
+
+    return c.json({ relationship }, 200);
   } catch (error) {
-    console.error("Get couple error:", error);
-    return c.json(
-      {
-        error: "Failed to retrieve couple information",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      500,
-    );
+    if (error instanceof ServiceError) {
+      return HttpResponse.error(c, {
+        message: error.message,
+        status: error.statusCode as ContentfulStatusCode,
+      });
+    }
+    console.error("Get relationship error:", error);
+    return HttpResponse.error(c, {
+      message: "Failed to retrieve relationship information",
+      status: 500,
+    });
   }
 });
 
@@ -308,51 +208,28 @@ relationshipApp.openapi(endRelationship, async (c) => {
     const session = await getSession(c, context.env.JWT_SECRET);
 
     if (!session) {
-      return c.json({ error: "Unauthorized - Authentication required" }, 401);
+      return HttpResponse.unauthorized(c, "Authentication required");
     }
 
-    const db = getDatabase(context.env);
-    const now = new Date();
+    const ctx = createContext(context.env);
+    const services = createServices(ctx);
 
-    // Get user's active relationship
-    const couple = await getUserActiveRelationship(db, session.userId);
+    // End relationship (sets to pending_deletion)
+    const result = await services.relationship.endRelationship(session.userId);
 
-    if (!couple) {
-      return c.json({ error: "No active relationship found" }, 404);
-    }
-
-    // Update couple status to pending_deletion (will be hard deleted after grace period)
-    await db
-      .update(relationshipTable)
-      .set({
-        status: "pending_deletion",
-        endedAt: now,
-        updatedAt: now,
-      })
-      .where(eq(relationshipTable.id, couple.id));
-
-    // Calculate permanent deletion date (7 days from ended date)
-    const permanentDeletionAt = new Date(
-      now.getTime() + 7 * 24 * 60 * 60 * 1000,
-    );
-
-    return c.json(
-      {
-        message:
-          "Relationship ended. All posts will be permanently deleted after grace period.",
-        permanentDeletionAt: permanentDeletionAt.toISOString(),
-      },
-      200,
-    );
+    return c.json(result, 200);
   } catch (error) {
+    if (error instanceof ServiceError) {
+      return HttpResponse.error(c, {
+        message: error.message,
+        status: error.statusCode as ContentfulStatusCode,
+      });
+    }
     console.error("End relationship error:", error);
-    return c.json(
-      {
-        error: "Failed to end relationship",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      500,
-    );
+    return HttpResponse.error(c, {
+      message: "Failed to end relationship",
+      status: 500,
+    });
   }
 });
 
@@ -362,113 +239,32 @@ relationshipApp.openapi(resumeRelationship, async (c) => {
     const session = await getSession(c, context.env.JWT_SECRET);
 
     if (!session) {
-      return c.json({ error: "Unauthorized - Authentication required" }, 401);
+      return HttpResponse.unauthorized(c, "Authentication required");
     }
 
-    const db = getDatabase(context.env);
-    const now = new Date();
+    const ctx = createContext(context.env);
+    const services = createServices(ctx);
 
-    // Find couple in pending_deletion status that user is part of
-    const couples = await db
-      .select()
-      .from(relationshipTable)
-      .where(
-        and(
-          or(
-            eq(relationshipTable.user1Id, session.userId),
-            eq(relationshipTable.user2Id, session.userId),
-          ),
-          eq(relationshipTable.status, "pending_deletion"),
-        ),
-      );
-
-    if (couples.length === 0) {
-      return c.json(
-        { error: "No couple in pending deletion state found" },
-        404,
-      );
-    }
-
-    const couple = couples[0];
-
-    // Check if grace period has expired (7 days from endedAt)
-    if (couple.endedAt) {
-      const permanentDeletionAt = new Date(
-        couple.endedAt.getTime() + 7 * 24 * 60 * 60 * 1000,
-      );
-      if (permanentDeletionAt < now) {
-        return c.json(
-          {
-            error: "Grace period has expired. Relationship cannot be resumed.",
-          },
-          400,
-        );
-      }
-    }
-
-    // Three-state logic:
-
-    // State 1: No request exists yet
-    if (!couple.resumeRequestedBy) {
-      await db
-        .update(relationshipTable)
-        .set({
-          resumeRequestedBy: session.userId,
-          resumeRequestedAt: now,
-          updatedAt: now,
-        })
-        .where(eq(relationshipTable.id, couple.id));
-
-      return c.json(
-        {
-          message: "Resume request sent. Waiting for partner approval.",
-          status: "pending_partner_approval",
-          requestedBy: session.userId,
-        },
-        202,
-      );
-    }
-
-    // State 2: Same user clicking again
-    if (couple.resumeRequestedBy === session.userId) {
-      return c.json(
-        {
-          message: "You have already requested to resume. Waiting for partner.",
-          status: "pending_partner_approval",
-          requestedBy: session.userId,
-        },
-        200,
-      );
-    }
-
-    // State 3: Partner accepting - complete the resume
-    await db
-      .update(relationshipTable)
-      .set({
-        status: "active",
-        endedAt: null,
-        resumeRequestedBy: null,
-        resumeRequestedAt: null,
-        updatedAt: now,
-      })
-      .where(eq(relationshipTable.id, couple.id));
-
-    return c.json(
-      {
-        message: "Relationship resumed successfully.",
-        status: "active",
-      },
-      200,
+    // Handle resume logic (3 states: request, already requested, complete)
+    const result = await services.relationship.resumeRelationship(
+      session.userId,
     );
+
+    // Return appropriate status code based on state
+    const statusCode = result.status === "pending_partner_approval" ? 202 : 200;
+    return c.json(result, statusCode);
   } catch (error) {
+    if (error instanceof ServiceError) {
+      return HttpResponse.error(c, {
+        message: error.message,
+        status: error.statusCode as ContentfulStatusCode,
+      });
+    }
     console.error("Resume relationship error:", error);
-    return c.json(
-      {
-        error: "Failed to resume relationship",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      500,
-    );
+    return HttpResponse.error(c, {
+      message: "Failed to resume relationship",
+      status: 500,
+    });
   }
 });
 
@@ -478,65 +274,30 @@ relationshipApp.openapi(cancelResumeRequest, async (c) => {
     const session = await getSession(c, context.env.JWT_SECRET);
 
     if (!session) {
-      return c.json({ error: "Unauthorized - Authentication required" }, 401);
+      return HttpResponse.unauthorized(c, "Authentication required");
     }
 
-    const db = getDatabase(context.env);
-    const now = new Date();
+    const ctx = createContext(context.env);
+    const services = createServices(ctx);
 
-    // Find couple in pending_deletion status that user is part of
-    const couples = await db
-      .select()
-      .from(relationshipTable)
-      .where(
-        and(
-          or(
-            eq(relationshipTable.user1Id, session.userId),
-            eq(relationshipTable.user2Id, session.userId),
-          ),
-          eq(relationshipTable.status, "pending_deletion"),
-        ),
-      );
-
-    if (couples.length === 0 || !couples[0].resumeRequestedBy) {
-      return c.json({ error: "No pending resume request found" }, 404);
-    }
-
-    const couple = couples[0];
-
-    // Only the requester can cancel
-    if (couple.resumeRequestedBy !== session.userId) {
-      return c.json(
-        { error: "Only the requester can cancel the resume request" },
-        403,
-      );
-    }
-
-    // Clear the resume request
-    await db
-      .update(relationshipTable)
-      .set({
-        resumeRequestedBy: null,
-        resumeRequestedAt: null,
-        updatedAt: now,
-      })
-      .where(eq(relationshipTable.id, couple.id));
-
-    return c.json(
-      {
-        message: "Resume request cancelled successfully.",
-      },
-      200,
+    // Cancel resume request (validates requester)
+    const result = await services.relationship.cancelResumeRequest(
+      session.userId,
     );
+
+    return c.json(result, 200);
   } catch (error) {
+    if (error instanceof ServiceError) {
+      return HttpResponse.error(c, {
+        message: error.message,
+        status: error.statusCode as ContentfulStatusCode,
+      });
+    }
     console.error("Cancel resume request error:", error);
-    return c.json(
-      {
-        error: "Failed to cancel resume request",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      500,
-    );
+    return HttpResponse.error(c, {
+      message: "Failed to cancel resume request",
+      status: 500,
+    });
   }
 });
 
@@ -546,69 +307,35 @@ relationshipApp.openapi(getInviteCode, async (c) => {
     const session = await getSession(c, context.env.JWT_SECRET);
 
     if (!session) {
-      return c.json({ error: "Unauthorized - Authentication required" }, 401);
+      return HttpResponse.unauthorized(c, "Authentication required");
     }
 
-    const db = getDatabase(context.env);
-    const now = new Date();
+    const ctx = createContext(context.env);
+    const services = createServices(ctx);
 
-    // Find user's invitation
-    let [invitation] = await db
-      .select()
-      .from(invitationTable)
-      .where(eq(invitationTable.createdBy, session.userId))
-      .orderBy(desc(invitationTable.createdAt))
-      .limit(1);
-
-    // Auto-create invitation if none exists
-    if (!invitation) {
-      // Generate unique invite code
-      let inviteCode = generateInviteCode();
-      let isUnique = false;
-      let attempts = 0;
-
-      while (!isUnique && attempts < 10) {
-        const existing = await db
-          .select()
-          .from(invitationTable)
-          .where(eq(invitationTable.inviteCode, inviteCode))
-          .limit(1);
-
-        if (existing.length === 0) {
-          isUnique = true;
-        } else {
-          inviteCode = generateInviteCode();
-          attempts++;
-        }
-      }
-
-      if (!isUnique) {
-        return c.json(
-          { error: "Failed to generate unique invite code. Please try again." },
-          500,
-        );
-      }
-
-      // Create invitation
-      [invitation] = await db
-        .insert(invitationTable)
-        .values({
-          inviteCode,
-          createdBy: session.userId,
-          createdAt: now,
-        })
-        .returning();
-    }
+    // Get existing or auto-create invitation
+    const inviteCode = await services.invitation.getOrCreateInvitation(
+      session.userId,
+    );
 
     return c.json(
       {
-        inviteCode: invitation.inviteCode,
+        inviteCode,
       },
       200,
     );
   } catch (error) {
+    if (error instanceof ServiceError) {
+      return HttpResponse.error(c, {
+        message: error.message,
+        status: error.statusCode as ContentfulStatusCode,
+      });
+    }
     console.error("Get pending invite error:", error);
-    return c.json({ error: "Failed to get or create invitation" }, 500);
+    return HttpResponse.error(c, {
+      message: "Failed to get or create invitation",
+      status: 500,
+    });
   }
 });
 
