@@ -291,10 +291,7 @@ postApp.openapi(deletePost, async (c) => {
     }
 
     // Verify post belongs to user's current active relationship
-    if (
-      activeRelationship &&
-      post.relationshipId !== activeRelationship.id
-    ) {
+    if (activeRelationship && post.relationshipId !== activeRelationship.id) {
       return c.json(
         {
           error: "Post does not belong to your current relationship",
@@ -304,9 +301,7 @@ postApp.openapi(deletePost, async (c) => {
     }
 
     // Hard delete associated attachments first (due to potential FK constraints)
-    await db
-      .delete(attachmentTable)
-      .where(eq(attachmentTable.postId, postId));
+    await db.delete(attachmentTable).where(eq(attachmentTable.postId, postId));
 
     // Hard delete the post
     await db.delete(postTable).where(eq(postTable.id, postId));

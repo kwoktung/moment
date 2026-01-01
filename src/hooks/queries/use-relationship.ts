@@ -76,7 +76,6 @@ export function useValidateInvite(inviteCode: string | null) {
 export interface PendingInviteResponse {
   invitation: {
     inviteCode: string;
-    inviteUrl: string;
     expiresAt: string;
   } | null;
 }

@@ -55,29 +55,10 @@ relationshipApp.openapi(createInvite, async (c) => {
       return c.json({ error: "You already have an active relationship" }, 403);
     }
 
-    // Check if user has a pending invitation and cancel it
-    const pendingInvites = await db
-      .select()
-      .from(invitationTable)
-      .where(
-        and(
-          eq(invitationTable.createdBy, session.userId),
-          eq(invitationTable.status, "pending"),
-        ),
-      );
-
-    if (pendingInvites.length > 0) {
-      // Cancel existing pending invitations
-      await db
-        .update(invitationTable)
-        .set({ status: "cancelled" })
-        .where(
-          and(
-            eq(invitationTable.createdBy, session.userId),
-            eq(invitationTable.status, "pending"),
-          ),
-        );
-    }
+    // Hard delete any existing invitations for this user
+    await db
+      .delete(invitationTable)
+      .where(eq(invitationTable.createdBy, session.userId));
 
     // Generate unique invite code
     let inviteCode = generateInviteCode();
@@ -114,21 +95,14 @@ relationshipApp.openapi(createInvite, async (c) => {
       .values({
         inviteCode,
         createdBy: session.userId,
-        status: "pending",
         expiresAt,
         createdAt: now,
       })
       .returning();
 
-    // Generate invite URL (use environment variable or request host)
-    const host = c.req.header("host") || "localhost:3000";
-    const protocol = host.includes("localhost") ? "http" : "https";
-    const inviteUrl = `${protocol}://${host}/sign-up?code=${inviteCode}`;
-
     return c.json(
       {
         inviteCode: invitation.inviteCode,
-        inviteUrl,
         expiresAt: expiresAt.toISOString(),
       },
       201,
@@ -175,19 +149,11 @@ relationshipApp.openapi(acceptInvite, async (c) => {
       return c.json({ error: "Invitation not found" }, 404);
     }
 
-    // Validate invitation
-    if (invitation.status !== "pending") {
-      return c.json(
-        { error: "Invitation has already been used or cancelled" },
-        400,
-      );
-    }
-
+    // Check if invitation has expired
     if (invitation.expiresAt && invitation.expiresAt < now) {
-      // Mark as expired
+      // Hard delete expired invitation
       await db
-        .update(invitationTable)
-        .set({ status: "expired" })
+        .delete(invitationTable)
         .where(eq(invitationTable.id, invitation.id));
 
       return c.json({ error: "Invitation has expired" }, 404);
@@ -221,15 +187,9 @@ relationshipApp.openapi(acceptInvite, async (c) => {
         })
         .returning();
 
-      // Update invitation
+      // Hard delete the invitation after successful acceptance
       await tx
-        .update(invitationTable)
-        .set({
-          status: "accepted",
-          acceptedBy: session.userId,
-          relationshipId: couple.id,
-          acceptedAt: now,
-        })
+        .delete(invitationTable)
         .where(eq(invitationTable.id, invitation.id));
 
       return couple;
@@ -618,11 +578,15 @@ relationshipApp.openapi(validateInvite, async (c) => {
       );
     }
 
-    // Check if invitation is valid
+    // Check if invitation has expired
     const isExpired = invitation.expiresAt && invitation.expiresAt < now;
-    const isValid = invitation.status === "pending" && !isExpired;
 
-    if (!isValid) {
+    if (isExpired) {
+      // Hard delete expired invitation
+      await db
+        .delete(invitationTable)
+        .where(eq(invitationTable.id, invitation.id));
+
       return c.json(
         {
           valid: false,
@@ -678,16 +642,11 @@ relationshipApp.openapi(getPendingInvite, async (c) => {
     const db = getDatabase(context.env);
     const now = new Date();
 
-    // Find user's pending invitation
+    // Find user's invitation
     const [invitation] = await db
       .select()
       .from(invitationTable)
-      .where(
-        and(
-          eq(invitationTable.createdBy, session.userId),
-          eq(invitationTable.status, "pending"),
-        ),
-      )
+      .where(eq(invitationTable.createdBy, session.userId))
       .orderBy(desc(invitationTable.createdAt))
       .limit(1);
 
@@ -695,27 +654,20 @@ relationshipApp.openapi(getPendingInvite, async (c) => {
       return c.json({ invitation: null }, 200);
     }
 
-    // Check if expired
+    // Check if expired and delete if so
     if (invitation.expiresAt && invitation.expiresAt < now) {
-      // Mark as expired
+      // Hard delete expired invitation
       await db
-        .update(invitationTable)
-        .set({ status: "expired" })
+        .delete(invitationTable)
         .where(eq(invitationTable.id, invitation.id));
 
       return c.json({ invitation: null }, 200);
     }
 
-    // Generate invite URL
-    const host = c.req.header("host") || "localhost:3000";
-    const protocol = host.includes("localhost") ? "http" : "https";
-    const inviteUrl = `${protocol}://${host}/sign-up?code=${invitation.inviteCode}`;
-
     return c.json(
       {
         invitation: {
           inviteCode: invitation.inviteCode,
-          inviteUrl,
           expiresAt: invitation.expiresAt?.toISOString() || "",
         },
       },

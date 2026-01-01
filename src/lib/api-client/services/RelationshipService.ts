@@ -12,21 +12,12 @@ export class RelationshipService {
      * @throws ApiError
      */
     public postApiRelationshipInviteCreate(
-        requestBody?: {
-            /**
-             * Relationship start date (ISO 8601)
-             */
-            relationshipStartDate?: string;
-        },
+        requestBody?: any,
     ): CancelablePromise<{
         /**
          * 8-character invite code
          */
         inviteCode: string;
-        /**
-         * Full invite URL
-         */
-        inviteUrl: string;
         /**
          * Expiration date (ISO 8601)
          */

@@ -1,6 +1,6 @@
 {
-  "id": "d3c7d4ca-7197-4462-a5a5-ed9ddb54f290",
-  "prevId": "43d9f7d1-5c6f-4f2f-9859-81240cfaab99",
+  "id": "0f6a2c96-36c0-46c5-815e-2496eef15e27",
+  "prevId": "aab5d3bf-8702-43ed-ac16-b820546d0539",
   "version": "6",
   "dialect": "sqlite",
   "tables": {
@@ -48,16 +48,12 @@
       "indexes": {
         "attachments_filename_idx": {
           "name": "attachments_filename_idx",
-          "columns": [
-            "filename"
-          ],
+          "columns": ["filename"],
           "isUnique": false
         },
         "attachments_post_id_idx": {
           "name": "attachments_post_id_idx",
-          "columns": [
-            "post_id"
-          ],
+          "columns": ["post_id"],
           "isUnique": false
         }
       },
@@ -90,27 +86,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "accepted_by": {
-          "name": "accepted_by",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "relationship_id": {
-          "name": "relationship_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -125,49 +100,27 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
-        },
-        "accepted_at": {
-          "name": "accepted_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
         "invitations_invite_code_unique": {
           "name": "invitations_invite_code_unique",
-          "columns": [
-            "invite_code"
-          ],
+          "columns": ["invite_code"],
           "isUnique": true
         },
         "invitations_invite_code_idx": {
           "name": "invitations_invite_code_idx",
-          "columns": [
-            "invite_code"
-          ],
+          "columns": ["invite_code"],
           "isUnique": false
         },
         "invitations_created_by_idx": {
           "name": "invitations_created_by_idx",
-          "columns": [
-            "created_by"
-          ],
-          "isUnique": false
-        },
-        "invitations_status_idx": {
-          "name": "invitations_status_idx",
-          "columns": [
-            "status"
-          ],
+          "columns": ["created_by"],
           "isUnique": false
         },
         "invitations_expires_at_idx": {
           "name": "invitations_expires_at_idx",
-          "columns": [
-            "expires_at"
-          ],
+          "columns": ["expires_at"],
           "isUnique": false
         }
       },
@@ -227,23 +180,17 @@
       "indexes": {
         "posts_created_by_idx": {
           "name": "posts_created_by_idx",
-          "columns": [
-            "created_by"
-          ],
+          "columns": ["created_by"],
           "isUnique": false
         },
         "posts_created_at_idx": {
           "name": "posts_created_at_idx",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         },
         "posts_relationship_id_idx": {
           "name": "posts_relationship_id_idx",
-          "columns": [
-            "relationship_id"
-          ],
+          "columns": ["relationship_id"],
           "isUnique": false
         }
       },
@@ -302,30 +249,22 @@
       "indexes": {
         "refresh_tokens_token_hash_unique": {
           "name": "refresh_tokens_token_hash_unique",
-          "columns": [
-            "token_hash"
-          ],
+          "columns": ["token_hash"],
           "isUnique": true
         },
         "refresh_tokens_user_id_idx": {
           "name": "refresh_tokens_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "refresh_tokens_token_hash_idx": {
           "name": "refresh_tokens_token_hash_idx",
-          "columns": [
-            "token_hash"
-          ],
+          "columns": ["token_hash"],
           "isUnique": false
         },
         "refresh_tokens_expires_at_idx": {
           "name": "refresh_tokens_expires_at_idx",
-          "columns": [
-            "expires_at"
-          ],
+          "columns": ["expires_at"],
           "isUnique": false
         }
       },
@@ -413,37 +352,27 @@
       "indexes": {
         "relationships_user1_id_idx": {
           "name": "relationships_user1_id_idx",
-          "columns": [
-            "user1_id"
-          ],
+          "columns": ["user1_id"],
           "isUnique": false
         },
         "relationships_user2_id_idx": {
           "name": "relationships_user2_id_idx",
-          "columns": [
-            "user2_id"
-          ],
+          "columns": ["user2_id"],
           "isUnique": false
         },
         "relationships_status_idx": {
           "name": "relationships_status_idx",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         },
         "relationships_ended_at_idx": {
           "name": "relationships_ended_at_idx",
-          "columns": [
-            "ended_at"
-          ],
+          "columns": ["ended_at"],
           "isUnique": false
         },
         "relationships_resume_requested_by_idx": {
           "name": "relationships_resume_requested_by_idx",
-          "columns": [
-            "resume_requested_by"
-          ],
+          "columns": ["resume_requested_by"],
           "isUnique": false
         }
       },
@@ -517,30 +446,22 @@
       "indexes": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         },
         "users_username_unique": {
           "name": "users_username_unique",
-          "columns": [
-            "username"
-          ],
+          "columns": ["username"],
           "isUnique": true
         },
         "users_email_idx": {
           "name": "users_email_idx",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": false
         },
         "users_username_idx": {
           "name": "users_username_idx",
-          "columns": [
-            "username"
-          ],
+          "columns": ["username"],
           "isUnique": false
         }
       },

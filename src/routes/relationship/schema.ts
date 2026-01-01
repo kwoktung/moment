@@ -1,20 +1,11 @@
 import { z } from "@hono/zod-openapi";
 
-export const createInviteSchema = z.object({
-  relationshipStartDate: z.string().datetime().optional().openapi({
-    description: "Relationship start date (ISO 8601)",
-    example: "2024-01-01T00:00:00Z",
-  }),
-});
+export const createInviteSchema = z.object({});
 
 export const createInviteResponseSchema = z.object({
   inviteCode: z.string().openapi({
     description: "8-character invite code",
     example: "AB12CD34",
-  }),
-  inviteUrl: z.string().openapi({
-    description: "Full invite URL",
-    example: "https://app.example.com/pair?code=AB12CD34",
   }),
   expiresAt: z.string().openapi({
     description: "Expiration date (ISO 8601)",
@@ -91,7 +82,6 @@ export const getPendingInviteResponseSchema = z.object({
   invitation: z
     .object({
       inviteCode: z.string(),
-      inviteUrl: z.string(),
       expiresAt: z.string(),
     })
     .nullable(),

@@ -190,24 +190,21 @@ authApp.openapi(signUp, async (c) => {
       .where(eq(invitationTable.inviteCode, inviteCode))
       .limit(1);
 
-    if (!invitation || invitation.status !== "pending") {
-      return c.json({ error: "Invalid or expired invitation code" }, 400);
+    if (!invitation) {
+      return c.json({ error: "Invalid invitation code" }, 400);
     }
 
     if (invitation.expiresAt && invitation.expiresAt < now) {
+      // Hard delete expired invitation
       await db
-        .update(invitationTable)
-        .set({ status: "expired" })
+        .delete(invitationTable)
         .where(eq(invitationTable.id, invitation.id));
       return c.json({ error: "Invitation code has expired" }, 400);
     }
 
     // Check if inviter already has an active relationship
     if (await hasActiveRelationship(db, invitation.createdBy)) {
-      return c.json(
-        { error: "Inviter is already in a relationship" },
-        400,
-      );
+      return c.json({ error: "Inviter is already in a relationship" }, 400);
     }
 
     // Create user
@@ -234,15 +231,9 @@ authApp.openapi(signUp, async (c) => {
       })
       .returning();
 
-    // Update invitation
+    // Hard delete the invitation after successful acceptance
     await db
-      .update(invitationTable)
-      .set({
-        status: "accepted",
-        acceptedBy: newUser.id,
-        relationshipId: relationship.id,
-        acceptedAt: now,
-      })
+      .delete(invitationTable)
       .where(eq(invitationTable.id, invitation.id));
 
     relationshipId = relationship.id;

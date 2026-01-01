@@ -71,32 +71,28 @@ export default function PairPage() {
   const [inviteCode, setInviteCode] = useState("");
   const [createdInvite, setCreatedInvite] = useState<{
     code: string;
-    url: string;
     expiresAt: string;
   } | null>(null);
   const [error, setError] = useState("");
 
+  // Construct invite URL from code
+  const constructInviteUrl = (code: string) => {
+    if (typeof window === "undefined") return "";
+    const host = window.location.host;
+    const protocol = window.location.protocol;
+    return `${protocol}//${host}/sign-up?code=${code}`;
+  };
+
   const router = useRouter();
-  const searchParams = useSearchParams();
   const createInviteMutation = useCreateInvite();
   const acceptInviteMutation = useAcceptInvite();
   const { data: pendingInviteData } = usePendingInvite();
-
-  // Check for invite code in URL
-  useEffect(() => {
-    const codeFromUrl = searchParams.get("code");
-    if (codeFromUrl) {
-      setActiveTab("accept");
-      setInviteCode(codeFromUrl);
-    }
-  }, [searchParams]);
 
   // Update createdInvite when pending invite data changes
   useEffect(() => {
     if (pendingInviteData?.invitation) {
       setCreatedInvite({
         code: pendingInviteData.invitation.inviteCode,
-        url: pendingInviteData.invitation.inviteUrl,
         expiresAt: pendingInviteData.invitation.expiresAt,
       });
     } else {
@@ -109,10 +105,9 @@ export default function PairPage() {
     try {
       // If there's an existing invite, we'll replace it with a new one
       // (The backend only allows one pending invite per user)
-      const result = await createInviteMutation.mutateAsync({});
+      const result = await createInviteMutation.mutateAsync();
       setCreatedInvite({
         code: result.inviteCode,
-        url: result.inviteUrl,
         expiresAt: result.expiresAt,
       });
     } catch (err) {
@@ -222,10 +217,10 @@ export default function PairPage() {
                       </p>
                       <div className="flex items-start gap-2 sm:items-center">
                         <code className="flex-1 break-all text-xs text-muted-foreground sm:truncate sm:text-sm">
-                          {createdInvite.url}
+                          {constructInviteUrl(createdInvite.code)}
                         </code>
                         <CopyButton
-                          text={createdInvite.url}
+                          text={constructInviteUrl(createdInvite.code)}
                           ariaLabel="Copy share link"
                         />
                       </div>

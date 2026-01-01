@@ -131,26 +131,22 @@ export const relationshipTable = sqliteTable(
 );
 
 // Invitations table
+// Note: Invitations are hard deleted when accepted or expired
 export const invitationTable = sqliteTable(
   "invitations",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     inviteCode: text("invite_code").notNull().unique(),
     createdBy: integer("created_by").notNull(),
-    status: text("status").notNull(), // 'pending' | 'accepted' | 'expired' | 'cancelled'
-    acceptedBy: integer("accepted_by"),
-    relationshipId: integer("relationship_id"),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(unixepoch())`,
     ),
     expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
-    acceptedAt: integer("accepted_at", { mode: "timestamp" }),
   },
   (table) => {
     return [
       index("invitations_invite_code_idx").on(table.inviteCode),
       index("invitations_created_by_idx").on(table.createdBy),
-      index("invitations_status_idx").on(table.status),
       index("invitations_expires_at_idx").on(table.expiresAt),
     ];
   },

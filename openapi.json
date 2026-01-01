@@ -688,17 +688,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "relationshipStartDate": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Relationship start date (ISO 8601)",
-                    "example": "2024-01-01T00:00:00Z"
-                  }
-                }
-              }
+              "schema": { "type": "object", "properties": {} }
             }
           }
         },
@@ -715,18 +705,13 @@
                       "description": "8-character invite code",
                       "example": "AB12CD34"
                     },
-                    "inviteUrl": {
-                      "type": "string",
-                      "description": "Full invite URL",
-                      "example": "https://app.example.com/pair?code=AB12CD34"
-                    },
                     "expiresAt": {
                       "type": "string",
                       "description": "Expiration date (ISO 8601)",
                       "example": "2024-01-08T00:00:00Z"
                     }
                   },
-                  "required": ["inviteCode", "inviteUrl", "expiresAt"]
+                  "required": ["inviteCode", "expiresAt"]
                 }
               }
             }
@@ -1042,10 +1027,9 @@
                       "type": ["object", "null"],
                       "properties": {
                         "inviteCode": { "type": "string" },
-                        "inviteUrl": { "type": "string" },
                         "expiresAt": { "type": "string" }
                       },
-                      "required": ["inviteCode", "inviteUrl", "expiresAt"]
+                      "required": ["inviteCode", "expiresAt"]
                     }
                   },
                   "required": ["invitation"]

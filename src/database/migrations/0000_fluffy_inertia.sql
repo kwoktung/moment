@@ -12,18 +12,13 @@ CREATE TABLE `invitations` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`invite_code` text NOT NULL,
 	`created_by` integer NOT NULL,
-	`status` text NOT NULL,
-	`accepted_by` integer,
-	`relationship_id` integer,
 	`created_at` integer DEFAULT (unixepoch()),
-	`expires_at` integer NOT NULL,
-	`accepted_at` integer
+	`expires_at` integer NOT NULL
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `invitations_invite_code_unique` ON `invitations` (`invite_code`);--> statement-breakpoint
 CREATE INDEX `invitations_invite_code_idx` ON `invitations` (`invite_code`);--> statement-breakpoint
 CREATE INDEX `invitations_created_by_idx` ON `invitations` (`created_by`);--> statement-breakpoint
-CREATE INDEX `invitations_status_idx` ON `invitations` (`status`);--> statement-breakpoint
 CREATE INDEX `invitations_expires_at_idx` ON `invitations` (`expires_at`);--> statement-breakpoint
 CREATE TABLE `posts` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
