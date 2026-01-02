@@ -21,7 +21,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useSignUp } from "@/hooks/mutations/use-auth-mutations";
 import { handleApiError } from "@/lib/error-handler";
-import { Heart } from "lucide-react";
 
 declare global {
   interface Window {
@@ -182,23 +181,9 @@ export default function SignUp() {
             <h2 className="text-2xl font-bold text-foreground">
               Create an account
             </h2>
-            {inviteCode ? (
-              <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-secondary p-4">
-                <Heart className="h-5 w-5 text-primary" fill="currentColor" />
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-semibold">
-                    You have an invitation code
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    You&apos;ll be paired after signing up
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">
-                Sign up to get started
-              </p>
-            )}
+            <p className="mt-2 text-sm text-muted-foreground">
+              Sign up to get started
+            </p>
           </div>
 
           <Form {...form}>
