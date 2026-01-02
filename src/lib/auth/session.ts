@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import {
   verifyJWT,
@@ -41,12 +41,7 @@ export async function validateRefreshToken(
   const storedToken = await db
     .select()
     .from(refreshTokenTable)
-    .where(
-      and(
-        eq(refreshTokenTable.tokenHash, tokenHash),
-        isNull(refreshTokenTable.revokedAt),
-      ),
-    )
+    .where(eq(refreshTokenTable.tokenHash, tokenHash))
     .get();
 
   if (!storedToken || storedToken.expiresAt < new Date()) {

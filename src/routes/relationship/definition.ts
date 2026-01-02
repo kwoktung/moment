@@ -1,5 +1,4 @@
 import { createRoute } from "@hono/zod-openapi";
-import { z } from "@hono/zod-openapi";
 import {
   createInviteSchema,
   createInviteResponseSchema,
@@ -9,8 +8,7 @@ import {
   endRelationshipResponseSchema,
   resumeRelationshipResponseSchema,
   cancelResumeRequestResponseSchema,
-  validateInviteResponseSchema,
-  getPendingInviteResponseSchema,
+  getInviteCodeResponseSchema,
 } from "./schema";
 
 export const createInvite = createRoute({
@@ -185,43 +183,16 @@ export const cancelResumeRequest = createRoute({
   },
 });
 
-export const validateInvite = createRoute({
+export const getInviteCode = createRoute({
   method: "get",
   tags: ["relationship"],
-  path: "/invite/validate",
-  request: {
-    query: z.object({
-      code: z.string().length(8).openapi({
-        description: "8-character invite code",
-        example: "AB12CD34",
-      }),
-    }),
-  },
+  path: "/invite/code",
   responses: {
     200: {
-      description: "Invite validation result",
+      description: "User's invite code (auto-created if none exists)",
       content: {
         "application/json": {
-          schema: validateInviteResponseSchema,
-        },
-      },
-    },
-    400: {
-      description: "Bad request - Invalid code format",
-    },
-  },
-});
-
-export const getPendingInvite = createRoute({
-  method: "get",
-  tags: ["relationship"],
-  path: "/invite/pending",
-  responses: {
-    200: {
-      description: "User's pending invitation (if any)",
-      content: {
-        "application/json": {
-          schema: getPendingInviteResponseSchema,
+          schema: getInviteCodeResponseSchema,
         },
       },
     },

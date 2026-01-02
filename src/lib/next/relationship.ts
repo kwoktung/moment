@@ -1,9 +1,13 @@
 import { getDatabase } from "@/database/client";
-import { relationshipTable, userTable } from "@/database/schema";
+import { userTable } from "@/database/schema";
 import { eq } from "drizzle-orm";
 
 import { getSession } from "./session";
 import { getContext } from "./context";
+import {
+  getUserActiveRelationship,
+  getPartnerId,
+} from "@/database/relationship-helpers";
 
 export type RelationshipInfo = {
   id: number;
@@ -34,33 +38,15 @@ export async function getRelationship(): Promise<RelationshipInfo | null> {
   const context = await getContext();
   const db = getDatabase(context.env);
 
-  // Get user's current relationship ID
-  const [user] = await db
-    .select()
-    .from(userTable)
-    .where(eq(userTable.id, session.userId))
-    .limit(1);
-
-  if (!user || !user.currentRelationshipId) {
-    return null;
-  }
-
-  // Get relationship info
-  const [relationship] = await db
-    .select()
-    .from(relationshipTable)
-    .where(eq(relationshipTable.id, user.currentRelationshipId))
-    .limit(1);
+  // Get user's active relationship
+  const relationship = await getUserActiveRelationship(db, session.userId);
 
   if (!relationship) {
     return null;
   }
 
   // Get partner ID
-  const partnerId =
-    relationship.user1Id === session.userId
-      ? relationship.user2Id
-      : relationship.user1Id;
+  const partnerId = getPartnerId(relationship, session.userId);
 
   // Get partner info
   const [partner] = await db

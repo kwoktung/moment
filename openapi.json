@@ -688,17 +688,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "relationshipStartDate": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Relationship start date (ISO 8601)",
-                    "example": "2024-01-01T00:00:00Z"
-                  }
-                }
-              }
+              "schema": { "type": "object", "properties": {} }
             }
           }
         },
@@ -712,21 +702,11 @@
                   "properties": {
                     "inviteCode": {
                       "type": "string",
-                      "description": "8-character invite code",
+                      "description": "8-character invite code (never expires)",
                       "example": "AB12CD34"
-                    },
-                    "inviteUrl": {
-                      "type": "string",
-                      "description": "Full invite URL",
-                      "example": "https://app.example.com/pair?code=AB12CD34"
-                    },
-                    "expiresAt": {
-                      "type": "string",
-                      "description": "Expiration date (ISO 8601)",
-                      "example": "2024-01-08T00:00:00Z"
                     }
                   },
-                  "required": ["inviteCode", "inviteUrl", "expiresAt"]
+                  "required": ["inviteCode"]
                 }
               }
             }
@@ -979,76 +959,24 @@
         }
       }
     },
-    "/api/relationship/invite/validate": {
+    "/api/relationship/invite/code": {
       "get": {
         "tags": ["relationship"],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 8,
-              "maxLength": 8,
-              "description": "8-character invite code",
-              "example": "AB12CD34"
-            },
-            "required": true,
-            "description": "8-character invite code",
-            "name": "code",
-            "in": "query"
-          }
-        ],
         "responses": {
           "200": {
-            "description": "Invite validation result",
+            "description": "User's invite code (auto-created if none exists)",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "valid": { "type": "boolean" },
-                    "inviter": {
-                      "type": ["object", "null"],
-                      "properties": {
-                        "id": { "type": "number" },
-                        "username": { "type": "string" },
-                        "displayName": { "type": ["string", "null"] },
-                        "avatar": { "type": ["string", "null"] }
-                      },
-                      "required": ["id", "username", "displayName", "avatar"]
-                    },
-                    "expiresAt": { "type": ["string", "null"] }
-                  },
-                  "required": ["valid", "inviter", "expiresAt"]
-                }
-              }
-            }
-          },
-          "400": { "description": "Bad request - Invalid code format" }
-        }
-      }
-    },
-    "/api/relationship/invite/pending": {
-      "get": {
-        "tags": ["relationship"],
-        "responses": {
-          "200": {
-            "description": "User's pending invitation (if any)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "invitation": {
-                      "type": ["object", "null"],
-                      "properties": {
-                        "inviteCode": { "type": "string" },
-                        "inviteUrl": { "type": "string" },
-                        "expiresAt": { "type": "string" }
-                      },
-                      "required": ["inviteCode", "inviteUrl", "expiresAt"]
+                    "inviteCode": {
+                      "type": "string",
+                      "description": "8-character invite code (auto-created if none exists)",
+                      "example": "AB12CD34"
                     }
                   },
-                  "required": ["invitation"]
+                  "required": ["inviteCode"]
                 }
               }
             }

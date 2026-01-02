@@ -12,25 +12,12 @@ export class RelationshipService {
      * @throws ApiError
      */
     public postApiRelationshipInviteCreate(
-        requestBody?: {
-            /**
-             * Relationship start date (ISO 8601)
-             */
-            relationshipStartDate?: string;
-        },
+        requestBody?: any,
     ): CancelablePromise<{
         /**
-         * 8-character invite code
+         * 8-character invite code (never expires)
          */
         inviteCode: string;
-        /**
-         * Full invite URL
-         */
-        inviteUrl: string;
-        /**
-         * Expiration date (ISO 8601)
-         */
-        expiresAt: string;
     }> {
         return this.httpRequest.request({
             method: 'POST',
@@ -154,38 +141,18 @@ export class RelationshipService {
         });
     }
     /**
-     * @param code 8-character invite code
-     * @returns any Invite validation result
+     * @returns any User's invite code (auto-created if none exists)
      * @throws ApiError
      */
-    public getApiRelationshipInviteValidate(
-        code: string,
-    ): CancelablePromise<{
-        valid: boolean;
-        inviter: any | null;
-        expiresAt: string | null;
+    public getApiRelationshipInviteCode(): CancelablePromise<{
+        /**
+         * 8-character invite code (auto-created if none exists)
+         */
+        inviteCode: string;
     }> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/api/relationship/invite/validate',
-            query: {
-                'code': code,
-            },
-            errors: {
-                400: `Bad request - Invalid code format`,
-            },
-        });
-    }
-    /**
-     * @returns any User's pending invitation (if any)
-     * @throws ApiError
-     */
-    public getApiRelationshipInvitePending(): CancelablePromise<{
-        invitation: any | null;
-    }> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/relationship/invite/pending',
+            url: '/api/relationship/invite/code',
             errors: {
                 401: `Unauthorized - Authentication required`,
             },

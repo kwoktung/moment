@@ -9,13 +9,12 @@ import {
   useAcceptInvite,
 } from "@/hooks/mutations/use-relationship-mutations";
 import {
-  usePendingInvite,
+  useInviteCode,
   useRelationship,
 } from "@/hooks/queries/use-relationship";
 import { handleApiError } from "@/lib/error-handler";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Copy, Check } from "lucide-react";
-import { formatTimeUntil } from "@/lib/format/timestamp";
 
 interface CopyButtonProps {
   text: string;
@@ -55,66 +54,106 @@ function CopyButton({
   );
 }
 
-const RelationshipPoller = () => {
+interface InfoCardProps {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+function InfoCard({ title, children, className = "" }: InfoCardProps) {
+  return (
+    <div
+      className={`rounded-xl border border-border bg-secondary p-3 sm:p-4 ${className}`}
+    >
+      <p className="mb-2 text-xs font-semibold text-muted-foreground sm:text-sm">
+        {title}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+function constructInviteUrl(code: string): string {
+  if (typeof window === "undefined") return "";
+  return `${window.location.origin}/sign-up?code=${code}`;
+}
+
+interface InviteDisplayProps {
+  inviteCode: string;
+  onRegenerateCode: () => void;
+  isRegenerating: boolean;
+}
+
+function InviteDisplay({
+  inviteCode,
+  onRegenerateCode,
+  isRegenerating,
+}: InviteDisplayProps) {
+  const inviteUrl = constructInviteUrl(inviteCode);
+
+  return (
+    <div className="space-y-3 sm:space-y-4">
+      <InfoCard title="Your Invite Code">
+        <div className="flex items-center gap-2">
+          <code className="flex-1 text-xl font-bold tracking-wider sm:text-2xl md:text-3xl">
+            {inviteCode}
+          </code>
+          <CopyButton text={inviteCode} ariaLabel="Copy invite code" />
+        </div>
+      </InfoCard>
+
+      <InfoCard title="Or Share the Full Link">
+        <div className="flex items-start gap-2 sm:items-center">
+          <code className="flex-1 break-all text-xs text-muted-foreground sm:truncate sm:text-sm">
+            {inviteUrl}
+          </code>
+          <CopyButton text={inviteUrl} ariaLabel="Copy share link" />
+        </div>
+      </InfoCard>
+      <Button
+        variant="outline"
+        onClick={onRegenerateCode}
+        disabled={isRegenerating}
+        className="w-full py-5 text-sm sm:py-6 sm:text-base"
+      >
+        {isRegenerating ? "Creating..." : "Generate New Code"}
+      </Button>
+    </div>
+  );
+}
+
+function RelationshipPoller() {
   const router = useRouter();
   const { data: relationshipData } = useRelationship({ refetchInterval: 5000 });
+
   useEffect(() => {
     if (relationshipData?.relationship) {
       router.push("/home");
     }
   }, [relationshipData, router]);
+
   return null;
-};
+}
 
 export default function PairPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"create" | "accept">("create");
   const [inviteCode, setInviteCode] = useState("");
-  const [createdInvite, setCreatedInvite] = useState<{
-    code: string;
-    url: string;
-    expiresAt: string;
-  } | null>(null);
   const [error, setError] = useState("");
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const createInviteMutation = useCreateInvite();
   const acceptInviteMutation = useAcceptInvite();
-  const { data: pendingInviteData } = usePendingInvite();
+  const { data: inviteCodeData } = useInviteCode();
 
-  // Check for invite code in URL
-  useEffect(() => {
-    const codeFromUrl = searchParams.get("code");
-    if (codeFromUrl) {
-      setActiveTab("accept");
-      setInviteCode(codeFromUrl);
-    }
-  }, [searchParams]);
+  const handleTabChange = (tab: "create" | "accept") => {
+    setActiveTab(tab);
+    setError("");
+  };
 
-  // Update createdInvite when pending invite data changes
-  useEffect(() => {
-    if (pendingInviteData?.invitation) {
-      setCreatedInvite({
-        code: pendingInviteData.invitation.inviteCode,
-        url: pendingInviteData.invitation.inviteUrl,
-        expiresAt: pendingInviteData.invitation.expiresAt,
-      });
-    } else {
-      setCreatedInvite(null);
-    }
-  }, [pendingInviteData]);
-
-  const handleCreateInvite = async () => {
+  const handleRegenerateCode = async () => {
     setError("");
     try {
-      // If there's an existing invite, we'll replace it with a new one
-      // (The backend only allows one pending invite per user)
-      const result = await createInviteMutation.mutateAsync({});
-      setCreatedInvite({
-        code: result.inviteCode,
-        url: result.inviteUrl,
-        expiresAt: result.expiresAt,
-      });
+      await createInviteMutation.mutateAsync();
     } catch (err) {
       setError(handleApiError(err));
     }
@@ -124,14 +163,15 @@ export default function PairPage() {
     e.preventDefault();
     setError("");
 
-    if (!inviteCode.trim()) {
+    const trimmedCode = inviteCode.trim();
+    if (!trimmedCode) {
       setError("Please enter an invite code");
       return;
     }
 
     try {
       await acceptInviteMutation.mutateAsync({
-        inviteCode: inviteCode.trim().toUpperCase(),
+        inviteCode: trimmedCode.toUpperCase(),
       });
       router.push("/home");
     } catch (err) {
@@ -155,99 +195,44 @@ export default function PairPage() {
 
           <Card className="p-4 sm:p-6">
             {/* Tab Buttons */}
-            <div className="mb-4 flex gap-2 sm:mb-6">
+            <div className="flex gap-2 sm:mb-6">
               <Button
                 type="button"
                 variant={activeTab === "create" ? "default" : "outline"}
                 className="flex-1 text-sm sm:text-base"
-                onClick={() => {
-                  setActiveTab("create");
-                  setError("");
-                }}
+                onClick={() => handleTabChange("create")}
               >
-                Invite Your Person
+                Share Code
               </Button>
               <Button
                 type="button"
                 variant={activeTab === "accept" ? "default" : "outline"}
                 className="flex-1 text-sm sm:text-base"
-                onClick={() => {
-                  setActiveTab("accept");
-                  setError("");
-                }}
+                onClick={() => handleTabChange("accept")}
               >
-                I Got an Invite!
+                Use Code
               </Button>
             </div>
 
             {/* Create Invite Tab */}
             {activeTab === "create" && (
               <div className="space-y-3 sm:space-y-4">
-                {!createdInvite ? (
+                {inviteCodeData?.inviteCode ? (
+                  <InviteDisplay
+                    inviteCode={inviteCodeData.inviteCode}
+                    onRegenerateCode={handleRegenerateCode}
+                    isRegenerating={createInviteMutation.isPending}
+                  />
+                ) : (
                   <>
                     <p className="text-sm text-muted-foreground sm:text-base">
-                      Create a link to invite them! Your code stays active for a
-                      week.
+                      Your invite code will be created automatically and never
+                      expires!
                     </p>
-                    <Button
-                      onClick={handleCreateInvite}
-                      disabled={createInviteMutation.isPending}
-                      className="w-full py-5 text-sm sm:py-6 sm:text-base"
-                    >
-                      {createInviteMutation.isPending
-                        ? "Creating..."
-                        : "Get My Invite Link"}
-                    </Button>
+                    <div className="flex items-center justify-center py-8">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                    </div>
                   </>
-                ) : (
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="rounded-xl border border-border bg-secondary p-3 sm:p-4">
-                      <p className="mb-2 text-xs font-semibold text-muted-foreground sm:text-sm">
-                        Share This Code
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 text-xl font-bold tracking-wider sm:text-2xl md:text-3xl">
-                          {createdInvite.code}
-                        </code>
-                        <CopyButton
-                          text={createdInvite.code}
-                          ariaLabel="Copy invite code"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-border bg-secondary p-3 sm:p-4">
-                      <p className="mb-2 text-xs font-semibold text-muted-foreground sm:text-sm">
-                        Or Share the Full Link
-                      </p>
-                      <div className="flex items-start gap-2 sm:items-center">
-                        <code className="flex-1 break-all text-xs text-muted-foreground sm:truncate sm:text-sm">
-                          {createdInvite.url}
-                        </code>
-                        <CopyButton
-                          text={createdInvite.url}
-                          ariaLabel="Copy share link"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-border bg-secondary p-3 sm:p-4 shadow-warm">
-                      <p className="text-sm text-foreground font-medium">
-                        Waiting for them to join...
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Expires {formatTimeUntil(createdInvite.expiresAt)}
-                      </p>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      onClick={() => setCreatedInvite(null)}
-                      className="w-full py-5 text-sm sm:py-6 sm:text-base"
-                    >
-                      Make a Fresh Invite
-                    </Button>
-                  </div>
                 )}
               </div>
             )}

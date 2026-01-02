@@ -1,14 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/client";
 
-interface CreateInviteRequest {
-  relationshipStartDate?: string;
-}
-
 interface CreateInviteResponse {
   inviteCode: string;
-  inviteUrl: string;
-  expiresAt: string;
 }
 
 interface AcceptInviteRequest {
@@ -19,15 +13,15 @@ export function useCreateInvite() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateInviteRequest) => {
+    mutationFn: async () => {
       const response =
-        await apiClient.relationship.postApiRelationshipInviteCreate(data);
+        await apiClient.relationship.postApiRelationshipInviteCreate({});
 
       return response as CreateInviteResponse;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["relationship"] });
-      queryClient.invalidateQueries({ queryKey: ["pendingInvite"] });
+      queryClient.invalidateQueries({ queryKey: ["inviteCode"] });
     },
   });
 }

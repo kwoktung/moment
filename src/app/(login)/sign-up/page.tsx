@@ -9,7 +9,6 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Form,
   FormControl,
@@ -19,9 +18,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useSignUp } from "@/hooks/mutations/use-auth-mutations";
-import { useValidateInvite } from "@/hooks/queries/use-relationship";
 import { handleApiError } from "@/lib/error-handler";
 import { Heart } from "lucide-react";
 
@@ -74,16 +72,6 @@ export default function SignUp() {
   const inviteCode = searchParams.get("code");
   const signUpMutation = useSignUp();
 
-  // Validate invite code using TanStack Query
-  const {
-    data: inviteValidation,
-    isLoading: isValidatingInvite,
-    error: inviteError,
-  } = useValidateInvite(inviteCode);
-
-  const inviter = inviteValidation?.inviter;
-  const inviteValid = inviteValidation?.valid;
-
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     mode: "onSubmit",
@@ -95,20 +83,6 @@ export default function SignUp() {
       turnstileToken: "",
     },
   });
-
-  // Set error if invite validation fails
-  useEffect(() => {
-    if (inviteCode && !isValidatingInvite && inviteError) {
-      setError("Failed to validate invitation code");
-    } else if (
-      inviteCode &&
-      !isValidatingInvite &&
-      inviteValidation &&
-      !inviteValidation.valid
-    ) {
-      setError("Invalid or expired invitation code");
-    }
-  }, [inviteCode, inviteValidation, isValidatingInvite, inviteError]);
 
   useEffect(() => {
     // Don't initialize if widget already exists
@@ -208,21 +182,15 @@ export default function SignUp() {
             <h2 className="text-2xl font-bold text-foreground">
               Create an account
             </h2>
-            {inviter && inviteValid ? (
+            {inviteCode ? (
               <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-secondary p-4">
                 <Heart className="h-5 w-5 text-primary" fill="currentColor" />
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={inviter.avatar || undefined} />
-                  <AvatarFallback>
-                    {inviter.displayName?.[0] || inviter.username[0]}
-                  </AvatarFallback>
-                </Avatar>
                 <div className="flex-1 text-left">
                   <p className="text-sm font-semibold">
-                    {inviter.displayName || inviter.username}
+                    You have an invitation code
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    is inviting you to join
+                    You&apos;ll be paired after signing up
                   </p>
                 </div>
               </div>

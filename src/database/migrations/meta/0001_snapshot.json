@@ -1,8 +1,8 @@
 {
+  "id": "f3ac366e-59fe-432b-a4a9-da4b9cf1f9ed",
+  "prevId": "9b78da4e-5a67-4f74-97ad-fe5b3efc209f",
   "version": "6",
   "dialect": "sqlite",
-  "id": "9b78da4e-5a67-4f74-97ad-fe5b3efc209f",
-  "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "attachments": {
       "name": "attachments",
@@ -447,9 +447,9 @@
   "views": {},
   "enums": {},
   "_meta": {
+    "columns": {},
     "schemas": {},
-    "tables": {},
-    "columns": {}
+    "tables": {}
   },
   "internal": {
     "indexes": {}

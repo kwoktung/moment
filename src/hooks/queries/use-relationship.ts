@@ -23,17 +23,6 @@ export interface RelationshipResponse {
   relationship: RelationshipInfo | null;
 }
 
-export interface ValidateInviteResponse {
-  valid: boolean;
-  inviter: {
-    id: number;
-    username: string;
-    displayName: string | null;
-    avatar: string | null;
-  } | null;
-  expiresAt: string | null;
-}
-
 export interface UseRelationshipOptions {
   refetchInterval?: number;
 }
@@ -52,42 +41,17 @@ export function useRelationship(options?: UseRelationshipOptions) {
   });
 }
 
-export function useValidateInvite(inviteCode: string | null) {
-  return useQuery({
-    queryKey: ["validateInvite", inviteCode],
-    queryFn: async () => {
-      if (!inviteCode) {
-        return { valid: false, inviter: null, expiresAt: null };
-      }
-
-      const response =
-        await apiClient.relationship.getApiRelationshipInviteValidate(
-          inviteCode,
-        );
-
-      return response as ValidateInviteResponse;
-    },
-    enabled: !!inviteCode,
-    staleTime: 1 * 60 * 1000, // 1 minute
-    retry: false,
-  });
+export interface InviteCodeResponse {
+  inviteCode: string;
 }
 
-export interface PendingInviteResponse {
-  invitation: {
-    inviteCode: string;
-    inviteUrl: string;
-    expiresAt: string;
-  } | null;
-}
-
-export function usePendingInvite() {
+export function useInviteCode() {
   return useQuery({
-    queryKey: ["pendingInvite"],
+    queryKey: ["inviteCode"],
     queryFn: async () => {
       const response =
-        await apiClient.relationship.getApiRelationshipInvitePending();
-      return response as PendingInviteResponse;
+        await apiClient.relationship.getApiRelationshipInviteCode();
+      return response as InviteCodeResponse;
     },
     staleTime: 1 * 60 * 1000, // 1 minute
     retry: 1,

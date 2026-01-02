@@ -2,9 +2,7 @@ CREATE TABLE `attachments` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`filename` text NOT NULL,
 	`post_id` integer,
-	`created_at` integer DEFAULT (unixepoch()),
-	`updated_at` integer DEFAULT (unixepoch()),
-	`deleted_at` integer
+	`created_at` integer DEFAULT (unixepoch())
 );
 --> statement-breakpoint
 CREATE INDEX `attachments_filename_idx` ON `attachments` (`filename`);--> statement-breakpoint
@@ -13,27 +11,19 @@ CREATE TABLE `invitations` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`invite_code` text NOT NULL,
 	`created_by` integer NOT NULL,
-	`status` text NOT NULL,
-	`accepted_by` integer,
-	`relationship_id` integer,
-	`created_at` integer DEFAULT (unixepoch()),
-	`expires_at` integer NOT NULL,
-	`accepted_at` integer
+	`created_at` integer DEFAULT (unixepoch())
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `invitations_invite_code_unique` ON `invitations` (`invite_code`);--> statement-breakpoint
 CREATE INDEX `invitations_invite_code_idx` ON `invitations` (`invite_code`);--> statement-breakpoint
 CREATE INDEX `invitations_created_by_idx` ON `invitations` (`created_by`);--> statement-breakpoint
-CREATE INDEX `invitations_status_idx` ON `invitations` (`status`);--> statement-breakpoint
-CREATE INDEX `invitations_expires_at_idx` ON `invitations` (`expires_at`);--> statement-breakpoint
 CREATE TABLE `posts` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`text` text NOT NULL,
 	`created_by` integer NOT NULL,
 	`relationship_id` integer,
 	`created_at` integer DEFAULT (unixepoch()),
-	`updated_at` integer DEFAULT (unixepoch()),
-	`deleted_at` integer
+	`updated_at` integer DEFAULT (unixepoch())
 );
 --> statement-breakpoint
 CREATE INDEX `posts_created_by_idx` ON `posts` (`created_by`);--> statement-breakpoint
@@ -44,8 +34,7 @@ CREATE TABLE `refresh_tokens` (
 	`user_id` integer NOT NULL,
 	`token_hash` text NOT NULL,
 	`expires_at` integer NOT NULL,
-	`created_at` integer DEFAULT (unixepoch()),
-	`revoked_at` integer
+	`created_at` integer DEFAULT (unixepoch())
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `refresh_tokens_token_hash_unique` ON `refresh_tokens` (`token_hash`);--> statement-breakpoint
@@ -60,7 +49,6 @@ CREATE TABLE `relationships` (
 	`start_date` integer,
 	`created_at` integer DEFAULT (unixepoch()),
 	`updated_at` integer DEFAULT (unixepoch()),
-	`deleted_at` integer,
 	`ended_at` integer,
 	`resume_requested_by` integer,
 	`resume_requested_at` integer
@@ -78,7 +66,6 @@ CREATE TABLE `users` (
 	`password` text NOT NULL,
 	`display_name` text,
 	`avatar` text,
-	`current_relationship_id` integer,
 	`created_at` integer DEFAULT (unixepoch()),
 	`updated_at` integer DEFAULT (unixepoch())
 );
@@ -86,5 +73,4 @@ CREATE TABLE `users` (
 CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);--> statement-breakpoint
 CREATE UNIQUE INDEX `users_username_unique` ON `users` (`username`);--> statement-breakpoint
 CREATE INDEX `users_email_idx` ON `users` (`email`);--> statement-breakpoint
-CREATE INDEX `users_username_idx` ON `users` (`username`);--> statement-breakpoint
-CREATE INDEX `users_current_relationship_id_idx` ON `users` (`current_relationship_id`);
+CREATE INDEX `users_username_idx` ON `users` (`username`);
