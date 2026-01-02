@@ -15,6 +15,7 @@ import { useSession } from "@/hooks/queries/use-auth";
 import { useDeletePost } from "@/hooks/mutations/use-post-mutations";
 import { handleApiError } from "@/lib/error-handler";
 import { useConfirmDialog } from "@/components/ui/confirm-dialog";
+import { getUserInitials } from "@/lib/format/user";
 
 const Dashboard = () => {
   const { data: posts = [], isLoading: loading } = usePosts();
@@ -64,19 +65,26 @@ const Dashboard = () => {
         <div className="mx-auto max-w-3xl px-4 py-6">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div>
-                <h1 className="text-xl font-semibold">Moments</h1>
+              <div className="flex items-center gap-3">
+                <div className="relative flex h-14 w-20 items-center">
+                  <Avatar className="absolute left-0 z-10 h-14 w-14 border-4 border-background shadow-md">
+                    <AvatarImage src={currentUser?.avatar || undefined} />
+                    <AvatarFallback className="bg-pink-400 text-white text-2xl">
+                      {getUserInitials(currentUser)}
+                    </AvatarFallback>
+                  </Avatar>
+                  {partner && (
+                    <Avatar className="absolute left-8 z-0 h-14 w-14 border-4 border-background shadow-md">
+                      <AvatarImage src={partner.avatar || undefined} />
+                      <AvatarFallback className="bg-blue-500 text-white text-2xl">
+                        {getUserInitials(partner)}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {partner && (
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={partner.avatar || undefined} />
-                  <AvatarFallback>
-                    {partner.displayName?.[0] || partner.username[0]}
-                  </AvatarFallback>
-                </Avatar>
-              )}
               <Link href="/settings">
                 <Button variant="ghost" size="icon" title="Settings">
                   <User className="size-6" />

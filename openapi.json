@@ -984,6 +984,48 @@
           "401": { "description": "Unauthorized - Authentication required" }
         }
       }
+    },
+    "/api/relationship/start-date": {
+      "post": {
+        "tags": ["relationship"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "startDate": {
+                    "type": "string",
+                    "description": "Relationship start date in ISO 8601 format (YYYY-MM-DD)",
+                    "example": "2024-01-01"
+                  }
+                },
+                "required": ["startDate"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Relationship start date updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "relationshipStartDate": { "type": "string" }
+                  },
+                  "required": ["message", "relationshipStartDate"]
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request - Invalid date format" },
+          "401": { "description": "Unauthorized - Authentication required" },
+          "404": { "description": "Not found - No active relationship found" }
+        }
+      }
     }
   },
   "webhooks": {}

@@ -1,3 +1,14 @@
+import {
+  differenceInSeconds,
+  differenceInMinutes,
+  differenceInHours,
+  differenceInDays,
+  format,
+  isSameYear,
+  parseISO,
+  formatDistanceToNow,
+} from "date-fns";
+
 /**
  * Formats a timestamp into a compact, social media-style relative time string.
  *
@@ -11,31 +22,8 @@
  * - "Dec 18, 2024" (older than 1 month, different year)
  */
 export const formatTimestamp = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  // Less than 1 minute
-  if (seconds < 60) return "now";
-
-  // Less than 1 hour
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-
-  // Less than 24 hours
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-
-  // Less than 7 days
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`;
-
-  // Less than 30 days (about 1 month)
-  if (seconds < 2592000) return `${Math.floor(seconds / 604800)}w`;
-
-  // Older than 1 month: show absolute date
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    ...(date.getFullYear() !== now.getFullYear() && { year: "numeric" }),
-  });
+  const date = parseISO(dateString);
+  return formatDistanceToNow(date);
 };
 
 /**
@@ -45,15 +33,8 @@ export const formatTimestamp = (dateString: string): string => {
  * Example: "December 27, 2025, 3:14 PM"
  */
 export const formatFullTimestamp = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+  const date = parseISO(dateString);
+  return format(date, "MMMM d, yyyy, h:mm a");
 };
 
 /**
@@ -69,9 +50,10 @@ export const formatFullTimestamp = (dateString: string): string => {
  * - "on Jan 7" (more than 7 days away)
  */
 export const formatTimeUntil = (dateString: string): string => {
-  const target = new Date(dateString);
+  const target = parseISO(dateString);
   const now = new Date();
-  const seconds = Math.floor((target.getTime() - now.getTime()) / 1000);
+
+  const seconds = differenceInSeconds(target, now);
 
   // Already expired
   if (seconds <= 0) return "expired";
@@ -80,27 +62,24 @@ export const formatTimeUntil = (dateString: string): string => {
   if (seconds < 60) return "in less than a minute";
 
   // Less than 1 hour
-  if (seconds < 3600) {
-    const minutes = Math.floor(seconds / 60);
+  const minutes = differenceInMinutes(target, now);
+  if (minutes < 60) {
     return `in ${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
   }
 
   // Less than 24 hours
-  if (seconds < 86400) {
-    const hours = Math.floor(seconds / 3600);
+  const hours = differenceInHours(target, now);
+  if (hours < 24) {
     return `in ${hours} ${hours === 1 ? "hour" : "hours"}`;
   }
 
   // Less than 7 days
-  if (seconds < 604800) {
-    const days = Math.floor(seconds / 86400);
+  const days = differenceInDays(target, now);
+  if (days < 7) {
     return `in ${days} ${days === 1 ? "day" : "days"}`;
   }
 
   // More than 7 days: show absolute date
-  return `on ${target.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    ...(target.getFullYear() !== now.getFullYear() && { year: "numeric" }),
-  })}`;
+  const formatString = isSameYear(target, now) ? "MMM d" : "MMM d, yyyy";
+  return `on ${format(target, formatString)}`;
 };

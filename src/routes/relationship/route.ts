@@ -11,6 +11,7 @@ import {
   resumeRelationship,
   cancelResumeRequest,
   getInviteCode,
+  updateStartDate,
 } from "./definition";
 import { createContext } from "@/lib/context";
 import { createServices } from "@/services";
@@ -160,6 +161,23 @@ relationshipApp.openapi(getInviteCode, async (c) => {
     },
     200,
   );
+});
+
+relationshipApp.openapi(updateStartDate, async (c) => {
+  const { session, context } = await requireAuth(c);
+
+  const body = c.req.valid("json");
+  const { startDate } = body;
+
+  const ctx = createContext(context.env);
+  const services = createServices(ctx);
+
+  const result = await services.relationship.updateRelationshipStartDate(
+    session.userId,
+    startDate,
+  );
+
+  return c.json(result, 200);
 });
 
 export default relationshipApp;

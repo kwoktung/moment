@@ -9,6 +9,8 @@ import {
   resumeRelationshipResponseSchema,
   cancelResumeRequestResponseSchema,
   getInviteCodeResponseSchema,
+  updateStartDateSchema,
+  updateStartDateResponseSchema,
 } from "./schema";
 
 export const createInvite = createRoute({
@@ -198,6 +200,40 @@ export const getInviteCode = createRoute({
     },
     401: {
       description: "Unauthorized - Authentication required",
+    },
+  },
+});
+
+export const updateStartDate = createRoute({
+  method: "post",
+  tags: ["relationship"],
+  path: "/start-date",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: updateStartDateSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Relationship start date updated successfully",
+      content: {
+        "application/json": {
+          schema: updateStartDateResponseSchema,
+        },
+      },
+    },
+    400: {
+      description: "Bad request - Invalid date format",
+    },
+    401: {
+      description: "Unauthorized - Authentication required",
+    },
+    404: {
+      description: "Not found - No active relationship found",
     },
   },
 });

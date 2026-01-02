@@ -98,3 +98,23 @@ export function useCancelResumeRequest() {
     },
   });
 }
+
+interface UpdateStartDateRequest {
+  startDate: string;
+}
+
+export function useUpdateRelationshipStartDate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: UpdateStartDateRequest) => {
+      const response =
+        await apiClient.relationship.postApiRelationshipStartDate(data);
+
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["relationship"] });
+    },
+  });
+}
