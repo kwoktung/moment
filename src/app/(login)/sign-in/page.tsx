@@ -34,14 +34,6 @@ export default function SignIn() {
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md">
-        {/* Logo/Brand */}
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-foreground">Moment</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Share your moments together
-          </p>
-        </div>
-
         <Card className="w-full p-8 shadow-warm-hover">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-foreground">Welcome back</h2>

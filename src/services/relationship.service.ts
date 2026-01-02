@@ -293,4 +293,51 @@ export class RelationshipService extends BaseService {
       message: "Resume request cancelled successfully.",
     };
   }
+
+  /**
+   * Updates the relationship start date
+   *
+   * @param userId - User ID updating the start date
+   * @param startDate - New start date in ISO format (YYYY-MM-DD)
+   * @returns Success message with new start date
+   * @throws HTTPException if no active relationship found
+   * @throws HTTPException if invalid date format
+   */
+  async updateRelationshipStartDate(
+    userId: number,
+    startDate: string,
+  ): Promise<{ message: string; relationshipStartDate: string }> {
+    // Get user's active relationship
+    const relationship = await getUserActiveRelationship(this.ctx.db, userId);
+
+    if (!relationship) {
+      throw new HTTPException(404, {
+        message: "No active relationship found",
+      });
+    }
+
+    // Validate and parse the date
+    const parsedDate = new Date(startDate);
+    if (isNaN(parsedDate.getTime())) {
+      throw new HTTPException(400, {
+        message: "Invalid date format. Expected ISO format (YYYY-MM-DD)",
+      });
+    }
+
+    const now = new Date();
+
+    // Update the relationship start date
+    await this.ctx.db
+      .update(relationshipTable)
+      .set({
+        startDate: parsedDate,
+        updatedAt: now,
+      })
+      .where(eq(relationshipTable.id, relationship.id));
+
+    return {
+      message: "Relationship start date updated successfully",
+      relationshipStartDate: parsedDate.toISOString(),
+    };
+  }
 }

@@ -158,4 +158,32 @@ export class RelationshipService {
             },
         });
     }
+    /**
+     * @param requestBody
+     * @returns any Relationship start date updated successfully
+     * @throws ApiError
+     */
+    public postApiRelationshipStartDate(
+        requestBody?: {
+            /**
+             * Relationship start date in ISO 8601 format (YYYY-MM-DD)
+             */
+            startDate: string;
+        },
+    ): CancelablePromise<{
+        message: string;
+        relationshipStartDate: string;
+    }> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/relationship/start-date',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: `Bad request - Invalid date format`,
+                401: `Unauthorized - Authentication required`,
+                404: `Not found - No active relationship found`,
+            },
+        });
+    }
 }

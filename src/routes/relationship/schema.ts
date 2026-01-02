@@ -67,3 +67,15 @@ export const getInviteCodeResponseSchema = z.object({
     example: "AB12CD34",
   }),
 });
+
+export const updateStartDateSchema = z.object({
+  startDate: z.string().openapi({
+    description: "Relationship start date in ISO 8601 format (YYYY-MM-DD)",
+    example: "2024-01-01",
+  }),
+});
+
+export const updateStartDateResponseSchema = z.object({
+  message: z.string(),
+  relationshipStartDate: z.string(),
+});
